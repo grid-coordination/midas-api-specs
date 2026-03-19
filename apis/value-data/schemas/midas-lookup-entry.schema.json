@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "midas-lookup-entry.schema.json",
+  "title": "MIDAS Lookup Entry",
+  "description": "An entry from a MIDAS lookup/reference table.",
+  "type": "object",
+  "required": ["UploadCode", "Description"],
+  "additionalProperties": false,
+  "properties": {
+    "UploadCode": {
+      "type": "string",
+      "description": "The code used during rate uploads."
+    },
+    "Description": {
+      "type": "string",
+      "description": "Human-readable description of the code."
+    }
+  }
+}

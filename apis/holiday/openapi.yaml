@@ -1,0 +1,91 @@
+openapi: 3.1.0
+info:
+  title: MIDAS Holiday API
+  version: 0.1.0
+  description: |
+    Unofficial OpenAPI specification for the MIDAS Holiday endpoint.
+
+    Derived from the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS)
+    and validated against the live API at https://midasapi.energy.ca.gov/.
+  contact:
+    name: Clark Communications Corporation
+    url: https://github.com/grid-coordination/midas-api-specs
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://midasapi.energy.ca.gov/api
+    description: MIDAS Production
+
+security:
+  - bearerAuth: []
+
+paths:
+  /Holiday:
+    get:
+      summary: Retrieve all utility holidays
+      description: |
+        Returns the complete list of holidays from all energy providers
+        in the MIDAS database. No filtering parameters are available —
+        you get all holidays for all providers in one response.
+      operationId: getHolidays
+      parameters: []
+      responses:
+        '200':
+          description: Array of holiday entries.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/HolidayEntry'
+        '401':
+          description: Unauthorized — missing or expired bearer token.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: 10-minute bearer token from the /Token endpoint.
+
+  schemas:
+    HolidayEntry:
+      type: object
+      description: A holiday entry for an energy provider.
+      required:
+        - EnergyCode
+        - EnergyDescription
+        - DateOfHoliday
+        - HolidayDescription
+      properties:
+        EnergyCode:
+          type: string
+          description: Two-character code for the energy provider.
+          examples:
+            - PG
+            - SD
+            - SC
+        EnergyDescription:
+          type: string
+          description: Human-readable name of the energy provider.
+          examples:
+            - Pacific Gas and Electric
+            - San Diego Gas and Electric
+        DateOfHoliday:
+          type: string
+          description: |
+            Local-time datetime of the holiday. The time portion is typically
+            T00:00:00 but the format is a full datetime without timezone
+            suffix, not a date or a proper ISO 8601 datetime.
+          examples:
+            - "2023-12-25T00:00:00"
+            - "2023-02-20T00:00:00"
+        HolidayDescription:
+          type: string
+          description: Human-readable description of the holiday.
+          examples:
+            - Christmas 2023
+            - President's Day
+            - Independence Day

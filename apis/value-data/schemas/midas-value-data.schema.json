@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "midas-value-data.schema.json",
+  "title": "MIDAS ValueData",
+  "description": "A single time-series interval with a price or emissions value.",
+  "type": "object",
+  "required": ["ValueName", "DateStart", "DateEnd", "DayStart", "DayEnd", "TimeStart", "TimeEnd", "value", "Unit"],
+  "additionalProperties": false,
+  "properties": {
+    "ValueName": {
+      "type": "string",
+      "description": "Description of the interval (e.g. 'summer on peak', 'winter off peak')."
+    },
+    "DateStart": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of interval start in UTC (ISO 8601)."
+    },
+    "DateEnd": {
+      "type": "string",
+      "format": "date",
+      "description": "Date of interval end in UTC (ISO 8601)."
+    },
+    "DayStart": {
+      "oneOf": [
+        { "$ref": "midas-enums.schema.json#/$defs/dayTypeString" },
+        { "type": "null" }
+      ],
+      "description": "Day type of interval start in local time (human-readable string in GET responses), or null (observed in HistoricalData)."
+    },
+    "DayEnd": {
+      "oneOf": [
+        { "$ref": "midas-enums.schema.json#/$defs/dayTypeString" },
+        { "type": "null" }
+      ],
+      "description": "Day type of interval end in local time (human-readable string in GET responses), or null (observed in HistoricalData)."
+    },
+    "TimeStart": {
+      "type": "string",
+      "pattern": "^\\d{2}:\\d{2}(:\\d{2})?$",
+      "description": "Time of interval start in UTC. Usually HH:MM:SS but Flex Alert responses use HH:MM."
+    },
+    "TimeEnd": {
+      "type": "string",
+      "pattern": "^\\d{2}:\\d{2}(:\\d{2})?$",
+      "description": "Time of interval end in UTC. Usually HH:MM:SS but Flex Alert responses use HH:MM."
+    },
+    "value": {
+      "type": "number",
+      "description": "The price or emissions value for this interval. Note: lowercase in GET responses despite upstream docs showing uppercase 'Value'."
+    },
+    "Unit": {
+      "$ref": "midas-enums.schema.json#/$defs/unit",
+      "description": "Unit for the value."
+    }
+  }
+}

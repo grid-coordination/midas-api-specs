@@ -1,0 +1,402 @@
+openapi: 3.1.0
+info:
+  title: MIDAS ValueData API
+  version: 0.1.0
+  description: |
+    Unofficial OpenAPI specification for the California Energy Commission's
+    [MIDAS](https://midasapi.energy.ca.gov/) ValueData endpoint.
+
+    Derived from the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS)
+    on a best-effort basis. May be incomplete, inaccurate, or out of date.
+
+    The ValueData endpoint is overloaded — it serves four distinct operations
+    depending on which query parameters are supplied:
+
+    1. **RIN List** — `?SignalType={0-3}` — list available Rate Identification Numbers
+    2. **Rate Values** — `?ID={RIN}&QueryType={alldata|realtime}` — retrieve rate/price data
+    3. **Lookup Table** — `?LookupTable={name}` — retrieve reference data (codes & descriptions)
+    4. **XML Schema** — no parameters — retrieve the upload XML schema
+
+    This is a single REST endpoint with multiplexed behavior, not four separate
+    resources. We document them as separate operations for clarity, but they all
+    hit the same URL. You're welcome, CEC.
+  contact:
+    name: Clark Communications Corporation
+    url: https://github.com/grid-coordination/midas-api-specs
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://midasapi.energy.ca.gov/api
+    description: MIDAS Production
+
+security:
+  - bearerAuth: []
+
+paths:
+  /ValueData:
+    get:
+      summary: Query rate data, RIN lists, lookup tables, or the upload schema
+      description: |
+        The ValueData endpoint serves multiple functions depending on which
+        query parameters are provided. Supply exactly one of the following
+        parameter combinations:
+
+        - `SignalType` alone → RIN list
+        - `ID` + `QueryType` → rate/price values
+        - `LookupTable` alone → reference lookup table
+        - No parameters → XML upload schema
+      operationId: getValueData
+      parameters:
+        - name: SignalType
+          in: query
+          description: |
+            Return all RINs of the specified signal type.
+            Mutually exclusive with ID, QueryType, and LookupTable.
+          required: false
+          schema:
+            $ref: '#/components/schemas/SignalTypeParam'
+        - name: ID
+          in: query
+          description: |
+            The Rate Identification Number (RIN) to query.
+            Must be accompanied by QueryType.
+          required: false
+          schema:
+            type: string
+            pattern: '^[A-Z]{2}[A-Z]{2}-[A-Z0-9]{2}[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{4,10}$'
+            examples:
+              - USCA-TSTS-TTOU-TEST
+              - USCA-PGPG-ETOU-0000
+        - name: QueryType
+          in: query
+          description: |
+            The type of data to return for the specified RIN.
+            Must be accompanied by ID.
+          required: false
+          schema:
+            type: string
+            enum:
+              - alldata
+              - realtime
+        - name: LookupTable
+          in: query
+          description: |
+            The name of the lookup table to retrieve.
+            Mutually exclusive with SignalType, ID, and QueryType.
+          required: false
+          schema:
+            type: string
+            enum:
+              - Country
+              - Daytype
+              - Distribution
+              - Enduse
+              - Energy
+              - Location
+              - Ratetype
+              - Sector
+              - State
+              - Unit
+      responses:
+        '200':
+          description: |
+            Successful response. The shape depends on which parameters were supplied:
+            - SignalType → array of RinListEntry
+            - ID + QueryType → single RateInfo object (not an array, despite what the docs imply)
+            - LookupTable → array of LookupEntry
+            - No params → XML schema as a JSON-encoded string
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - title: RIN List
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RinListEntry'
+                  - title: Rate Values
+                    $ref: '#/components/schemas/RateInfo'
+                  - title: Lookup Table
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LookupEntry'
+                  - title: XML Schema
+                    type: string
+        '401':
+          description: Unauthorized — missing or expired bearer token
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Obtain a 10-minute bearer token from the /Token endpoint using
+        HTTP Basic authentication, then pass it as `Authorization: Bearer {token}`.
+
+  schemas:
+    SignalTypeParam:
+      type: integer
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+      description: |
+        Signal type filter for RIN list queries:
+        - 0 = All
+        - 1 = Electricity rates
+        - 2 = Greenhouse gas emissions
+        - 3 = California ISO Flex Alert
+
+    RinListEntry:
+      type: object
+      description: A RIN entry returned by the SignalType query.
+      required:
+        - RateID
+        - SignalType
+        - Description
+      properties:
+        RateID:
+          type: string
+          description: The Rate Identification Number (RIN).
+          examples:
+            - USCA-TSTS-TTOU-TEST
+        SignalType:
+          type: string
+          description: Human-readable signal type.
+          enum:
+            - Rates
+            - GHG
+            - Flex Alert
+        Description:
+          type: string
+          description: Human-readable description including distribution and energy providers.
+          examples:
+            - "Rate Data for Distributor: Test, Energy Company: Test"
+        LastUpdated:
+          type: string
+          format: date-time
+          description: |
+            Timestamp of the last update to this RIN's data.
+            Undocumented in upstream docs but present in live API responses.
+          examples:
+            - "2023-06-07T15:57:48.023Z"
+
+    RateInfo:
+      type: object
+      description: |
+        Rate information and associated time-series values for a single RIN.
+        Returned by the ID + QueryType query.
+      required:
+        - RateID
+        - RateName
+        - RateType
+        - ValueInformation
+      properties:
+        RateID:
+          type: string
+          description: The Rate Identification Number (RIN).
+          examples:
+            - USCA-TSTS-TTOU-TEST
+        SystemTime_UTC:
+          type: string
+          format: date-time
+          description: Server timestamp of the response in UTC.
+          examples:
+            - "2023-03-21T16:34:42.906Z"
+        RateName:
+          type: string
+          description: Name of the rate as provided by the uploading party.
+          examples:
+            - CEC TEST24HTOU
+        RateType:
+          type:
+            - string
+            - "null"
+          description: |
+            Rate classification. The upload codes (TOU, CPP, RTP, etc.) are
+            expanded to human-readable strings in GET responses. Null for
+            some signal types (e.g. Flex Alert).
+
+            Note: Uploads use short codes (e.g. "TOU") but GET responses
+            return long descriptions (e.g. "Time of use"). This inconsistency
+            is in the upstream API, not our spec.
+          examples:
+            - Time of use
+            - Critical Peak Pricing
+            - Real Time Pricing
+            - Greenhouse Gas emissions
+        Sector:
+          type:
+            - string
+            - "null"
+          description: |
+            Customer sector or null. GET responses return long descriptions
+            (e.g. "All sectors") rather than upload codes (e.g. "All").
+          examples:
+            - All sectors
+            - Residential
+        EndUse:
+          type:
+            - string
+            - "null"
+          description: End use category (All, EV, Solar, Battery, Other) or null.
+        API_Url:
+          type:
+            - string
+            - "null"
+          description: |
+            API URL as provided by uploading party, or null.
+            Note: The live API may return the literal string "None" instead
+            of JSON null when no URL is set.
+        RatePlan_Url:
+          type:
+            - string
+            - "null"
+          format: uri
+          description: Link to rate schedule as provided by uploading party, or null.
+        AltRateName1:
+          type:
+            - string
+            - "null"
+          description: Alternate rate name, or null.
+        AltRateName2:
+          type:
+            - string
+            - "null"
+          description: Another alternate rate name, or null.
+        SignupCloseDate:
+          type:
+            - string
+            - "null"
+          format: date-time
+          description: |
+            Last day to sign up for the rate, or null. The upstream docs
+            describe this as a date, but the live API returns a full
+            ISO 8601 datetime (e.g. "2024-12-31T00:00:00.000Z").
+        ValueInformation:
+          type: array
+          description: Time-series collection of price/value intervals.
+          items:
+            $ref: '#/components/schemas/ValueData'
+
+    ValueData:
+      type: object
+      description: |
+        A single time-series interval with a price or emissions value.
+        Dates and times are in UTC; DayStart/DayEnd reflect local-time day type.
+      required:
+        - ValueName
+        - DateStart
+        - DateEnd
+        - DayStart
+        - DayEnd
+        - TimeStart
+        - TimeEnd
+        - value
+        - Unit
+      properties:
+        ValueName:
+          type: string
+          description: Description of the interval (e.g. "summer on peak", "winter off peak").
+          examples:
+            - winter off peak
+            - winter on peak
+            - summer on peak
+        DateStart:
+          type: string
+          format: date
+          description: Date of interval start in UTC (ISO 8601).
+          examples:
+            - "2023-03-01"
+        DateEnd:
+          type: string
+          format: date
+          description: Date of interval end in UTC (ISO 8601).
+          examples:
+            - "2023-03-01"
+        DayStart:
+          type:
+            - string
+            - "null"
+          description: |
+            Day type of interval start in local time, as a human-readable
+            string, or null (observed in HistoricalData responses).
+
+            Upload format uses integers: 1=Monday through 7=Sunday, 8=Holiday.
+            GET response format uses strings: "Monday" through "Sunday", "Holiday".
+          examples:
+            - Monday
+            - Tuesday
+            - Holiday
+        DayEnd:
+          type:
+            - string
+            - "null"
+          description: Day type of interval end in local time. Same encoding as DayStart, or null.
+          examples:
+            - Monday
+            - Friday
+        TimeStart:
+          type: string
+          pattern: '^\d{2}:\d{2}(:\d{2})?$'
+          description: |
+            Time of interval start in UTC. Usually HH:MM:SS but Flex Alert
+            responses use HH:MM (no seconds).
+          examples:
+            - "08:00:00"
+            - "03:11"
+        TimeEnd:
+          type: string
+          pattern: '^\d{2}:\d{2}(:\d{2})?$'
+          description: |
+            Time of interval end in UTC. Usually HH:MM:SS but Flex Alert
+            responses use HH:MM (no seconds).
+          examples:
+            - "08:59:59"
+            - "03:11"
+        value:
+          type: number
+          description: |
+            The price or emissions value for this interval.
+
+            Note: This field is lowercase "value" in GET responses, despite
+            being documented as uppercase "Value" in the upstream docs and
+            using uppercase in upload examples. We spec what the API actually
+            returns.
+          examples:
+            - 0.1006
+            - 0.1388
+        Unit:
+          type: string
+          description: |
+            Unit for the value. Known units from the Unit lookup table:
+            $/kWh, $/kW, export $/kWh, backup $/kWh,
+            kg/kWh CO2, $/kvarh, Event, Level.
+          examples:
+            - "$/kWh"
+            - "$/kW"
+            - "export $/kWh"
+            - "kg/kWh CO2"
+
+    LookupEntry:
+      type: object
+      description: An entry from a MIDAS lookup/reference table.
+      required:
+        - UploadCode
+        - Description
+      properties:
+        UploadCode:
+          type: string
+          description: The code used during rate uploads.
+          examples:
+            - PG
+            - MC
+        Description:
+          type: string
+          description: Human-readable description of the code.
+          examples:
+            - Pacific Gas and Electric
+            - Marin Clean Energy

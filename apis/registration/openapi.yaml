@@ -1,0 +1,89 @@
+openapi: 3.1.0
+info:
+  title: MIDAS Registration API
+  version: 0.1.0
+  description: |
+    Unofficial OpenAPI specification for the MIDAS Registration endpoint.
+
+    Derived from the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS)
+    on a best-effort basis.
+
+    Note: All body fields must be individually base64-encoded before sending.
+    This is an unusual design choice — most APIs handle encoding at the
+    transport layer. But this is MIDAS, so here we are.
+  contact:
+    name: Clark Communications Corporation
+    url: https://github.com/grid-coordination/midas-api-specs
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://midasapi.energy.ca.gov/api
+    description: MIDAS Production
+
+paths:
+  /Registration:
+    post:
+      summary: Create a new MIDAS user account
+      description: |
+        Register a new user or LSE account. All string fields in the request
+        body must be base64-encoded. A verification email will be sent to the
+        provided email address.
+
+        LSE accounts require additional verification — after registering,
+        email midas@energy.ca.gov from your LSE email to request upload access.
+      operationId: registerUser
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistrationRequest'
+      responses:
+        '200':
+          description: Registration successful.
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                success:
+                  value: "User account for myuser was successfully created. A verification email has been sent to user@example.com. Please click the link in the email in order to start using the API."
+        '400':
+          description: Invalid registration parameters.
+
+components:
+  schemas:
+    RegistrationRequest:
+      type: object
+      description: |
+        Registration fields. All string values must be base64-encoded.
+        Yes, each field individually. No, we don't know why.
+      required:
+        - fullname
+        - username
+        - password
+        - emailaddress
+      properties:
+        fullname:
+          type: string
+          format: byte
+          description: Full name, base64-encoded.
+        username:
+          type: string
+          format: byte
+          description: Requested username, base64-encoded.
+        password:
+          type: string
+          format: byte
+          description: Password, base64-encoded.
+        emailaddress:
+          type: string
+          format: byte
+          description: Email address, base64-encoded.
+        organization:
+          type: string
+          format: byte
+          description: Organization name, base64-encoded. Optional.

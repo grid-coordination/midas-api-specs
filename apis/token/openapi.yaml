@@ -1,0 +1,57 @@
+openapi: 3.1.0
+info:
+  title: MIDAS Token API
+  version: 0.1.0
+  description: |
+    Unofficial OpenAPI specification for the MIDAS Token endpoint.
+
+    Derived from the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS)
+    and validated against the live API at https://midasapi.energy.ca.gov/.
+  contact:
+    name: Clark Communications Corporation
+    url: https://github.com/grid-coordination/midas-api-specs
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://midasapi.energy.ca.gov/api
+    description: MIDAS Production
+
+paths:
+  /Token:
+    get:
+      summary: Retrieve a short-lived bearer token
+      description: |
+        Authenticate with HTTP Basic (username:password base64-encoded) to
+        receive a bearer token valid for 10 minutes. The token is returned
+        in the `Token` response header, not in the response body.
+
+        The response body contains a human-readable confirmation message.
+      operationId: getToken
+      security:
+        - basicAuth: []
+      responses:
+        '200':
+          description: Token issued successfully.
+          headers:
+            Token:
+              description: The bearer token string (JWT). Valid for 10 minutes.
+              schema:
+                type: string
+          content:
+            text/plain:
+              schema:
+                type: string
+              examples:
+                success:
+                  value: "Token issued and will expire in 10 minutes."
+        '401':
+          description: Invalid credentials.
+
+components:
+  securitySchemes:
+    basicAuth:
+      type: http
+      scheme: basic
+      description: Base64-encoded username:password.

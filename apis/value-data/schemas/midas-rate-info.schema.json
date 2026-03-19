@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "midas-rate-info.schema.json",
+  "title": "MIDAS RateInfo",
+  "description": "Rate information and associated time-series values for a single RIN.",
+  "type": "object",
+  "required": ["RateID", "ValueInformation"],
+  "additionalProperties": false,
+  "properties": {
+    "RateID": {
+      "type": ["string", "null"],
+      "description": "The Rate Identification Number (RIN). Null when querying realtime on a non-realtime RIN."
+    },
+    "SystemTime_UTC": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Server timestamp of the response in UTC."
+    },
+    "RateName": {
+      "type": ["string", "null"],
+      "description": "Name of the rate as provided by the uploading party."
+    },
+    "RateType": {
+      "type": ["string", "null"],
+      "description": "Rate classification (TOU, CPP, RTP, etc.). Null for some signal types (e.g. Flex Alert)."
+    },
+    "Sector": {
+      "type": ["string", "null"],
+      "description": "Customer sector or null."
+    },
+    "EndUse": {
+      "type": ["string", "null"],
+      "description": "End use category or null."
+    },
+    "API_Url": {
+      "type": ["string", "null"],
+      "description": "API URL as provided by uploading party, or null."
+    },
+    "RatePlan_Url": {
+      "type": ["string", "null"],
+      "description": "Link to rate schedule as provided by uploading party, or null."
+    },
+    "AltRateName1": {
+      "type": ["string", "null"],
+      "description": "Alternate rate name, or null."
+    },
+    "AltRateName2": {
+      "type": ["string", "null"],
+      "description": "Another alternate rate name, or null."
+    },
+    "SignupCloseDate": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "Last day to sign up for the rate, or null. Live API returns full ISO 8601 datetime despite upstream docs describing it as a date."
+    },
+    "ValueInformation": {
+      "type": ["array", "null"],
+      "description": "Time-series collection of price/value intervals. Null when no data is available (e.g. realtime query on a non-realtime RIN).",
+      "items": {
+        "$ref": "midas-value-data.schema.json"
+      }
+    }
+  }
+}

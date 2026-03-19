@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "midas-enums.schema.json",
+  "title": "MIDAS Enumerations",
+  "description": "Shared enumerations for the MIDAS API, derived from lookup tables.",
+  "$defs": {
+    "signalType": {
+      "type": "string",
+      "enum": ["Rates", "GHG", "Flex Alert"],
+      "description": "Human-readable signal type returned in RIN list queries."
+    },
+    "signalTypeParam": {
+      "type": "integer",
+      "enum": [0, 1, 2, 3],
+      "description": "Numeric signal type parameter: 0=All, 1=Electricity rates, 2=GHG emissions, 3=Flex Alert."
+    },
+    "rateType": {
+      "type": "string",
+      "enum": ["TOU", "CPP", "RTP", "DSR", "VPP", "V-D", "C-D", "R-D", "T-D", "GHG"],
+      "description": "Rate classification code. TOU=Time of Use, CPP=Critical Peak Pricing, RTP=Real-Time Pricing, DSR=Demand Side Response, VPP=Virtual Power Plant, V-D/C-D/R-D/T-D=Volumetric/Capacity/Revenue/Transmission Delivery, GHG=Greenhouse Gas."
+    },
+    "sector": {
+      "type": "string",
+      "enum": ["Res", "Com", "Ind", "Agr", "REV", "CEV", "CIA", "All"],
+      "description": "Customer sector: Residential, Commercial, Industrial, Agricultural, REV, CEV, CIA, or All."
+    },
+    "endUse": {
+      "type": "string",
+      "enum": ["All", "EV", "Solar", "Battery", "Other"],
+      "description": "End use category."
+    },
+    "unit": {
+      "type": "string",
+      "enum": ["$/kWh", "$/kW", "export $/kWh", "backup $/kWh", "kg/kWh CO2", "$/kvarh", "Event", "Level"],
+      "description": "Value unit from the MIDAS Unit lookup table."
+    },
+    "dayTypeInteger": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 8,
+      "description": "Day type as integer (upload format): 1=Monday, 2=Tuesday, 3=Wednesday, 4=Thursday, 5=Friday, 6=Saturday, 7=Sunday, 8=Holiday."
+    },
+    "dayTypeString": {
+      "type": "string",
+      "enum": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "Holiday"],
+      "description": "Day type as human-readable string (GET response format)."
+    },
+    "lookupTable": {
+      "type": "string",
+      "enum": ["Country", "Daytype", "Distribution", "Enduse", "Energy", "Location", "Ratetype", "Sector", "State", "Unit"],
+      "description": "Available MIDAS lookup tables."
+    }
+  }
+}

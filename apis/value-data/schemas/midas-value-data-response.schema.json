@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "midas-value-data-response.schema.json",
+  "title": "MIDAS ValueData Response (Rate Values)",
+  "description": "Response from the ValueData endpoint when queried with ID + QueryType. Returns a single RateInfo object. The upstream docs and example files imply an array, but the live API returns a single object.",
+  "$ref": "midas-rate-info.schema.json"
+}
