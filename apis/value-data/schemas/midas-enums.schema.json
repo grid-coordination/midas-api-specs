@@ -5,9 +5,9 @@
   "description": "Shared enumerations for the MIDAS API, derived from lookup tables.",
   "$defs": {
     "signalType": {
-      "type": "string",
-      "enum": ["Rates", "GHG", "Flex Alert"],
-      "description": "Human-readable signal type returned in RIN list queries."
+      "type": ["string", "null"],
+      "enum": ["Rates", "GHG", "Flex Alert", null],
+      "description": "Human-readable signal type returned in RIN list queries. Null for GHG and Flex Alert entries in live API responses."
     },
     "signalTypeParam": {
       "type": "integer",

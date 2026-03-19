@@ -152,12 +152,15 @@ components:
           examples:
             - USCA-TSTS-TTOU-TEST
         SignalType:
-          type: string
-          description: Human-readable signal type.
+          type:
+            - string
+            - 'null'
+          description: Human-readable signal type. Null for GHG and Flex Alert entries in live API responses.
           enum:
             - Rates
             - GHG
             - Flex Alert
+            - null
         Description:
           type: string
           description: Human-readable description including distribution and energy providers.
