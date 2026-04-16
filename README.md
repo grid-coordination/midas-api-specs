@@ -27,6 +27,8 @@ apis/
     examples/
   historical/        # HistoricalData & HistoricalList APIs (authenticated)
     openapi.yaml
+doc/
+  rin-structure.md   # Rate Identification Number (RIN) format and structure
 ```
 
 Each API directory follows the same convention:
@@ -41,7 +43,7 @@ Each API directory follows the same convention:
 
 | API | Auth | Status | Description |
 |-----|------|--------|-------------|
-| **ValueData** | Bearer token | Specified | Query rate, GHG, and Flex Alert data by RIN; list RINs; retrieve lookup tables |
+| **ValueData** | Bearer token | Specified | Query rate, GHG, and Flex Alert data by [RIN](doc/rin-structure.md); list RINs; retrieve lookup tables |
 | **Token** | Basic Auth | Specified | Retrieve short-lived (10-minute) bearer tokens |
 | **Registration** | None | Specified | Create new user and LSE accounts (POST only) |
 | **Holiday** | Bearer token | Specified | Retrieve utility holiday schedules |
