@@ -29,6 +29,7 @@ apis/
     openapi.yaml
 doc/
   rin-structure.md   # Rate Identification Number (RIN) format and structure
+  flex-alerts.md     # Flex Alert signals, CAISO escalation ladder, and history
 ```
 
 Each API directory follows the same convention:
