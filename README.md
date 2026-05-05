@@ -28,8 +28,9 @@ apis/
   historical/        # HistoricalData & HistoricalList APIs (authenticated)
     openapi.yaml
 doc/
-  rin-structure.md   # Rate Identification Number (RIN) format and structure
-  flex-alerts.md     # Flex Alert signals, CAISO escalation ladder, and history
+  rin-structure.md          # Rate Identification Number (RIN) format and structure
+  flex-alerts.md            # Flex Alert signals, CAISO escalation ladder, and history
+  datetime-and-timezone.md  # Wire-format datetime conventions (UTC vs PT — empirically verified)
 ```
 
 Each API directory follows the same convention:
@@ -52,6 +53,10 @@ Each API directory follows the same convention:
 | **HistoricalList** | Bearer token | Specified | List RINs with available historical data by provider |
 
 See the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS) for the upstream API docs (such as they are).
+
+## Datetime conventions
+
+The MIDAS API mixes UTC and bare wall-clock datetimes on the wire and does not document which fields are which. Fields whose names end in `_UTC` (or whose ISO 8601 strings carry a `Z` suffix) are UTC; **every other datetime field is `America/Los_Angeles` local** (PT — PST in winter, PDT in summer). See [doc/datetime-and-timezone.md](doc/datetime-and-timezone.md) for the empirical verification, the per-field inventory, and consumer guidance for parsing.
 
 ## Validation
 
