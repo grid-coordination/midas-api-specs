@@ -18,13 +18,30 @@ Flex Alerts sit at the lowest severity level of CAISO's grid emergency hierarchy
 
 ## MIDAS RINs
 
-MIDAS provides three Flex Alert RINs, all pass-through from CAISO:
+### v2.0 (effective 2026-06-22)
+
+MIDAS v2.0 consolidates the three v1.0 Flex Alert RINs into a single unified RIN:
+
+| RIN | Description |
+|-----|-------------|
+| `USCA-FLEX-ALRT-0000` | Unified Flex Alert — clean hourly binary series with no gaps. `Value=1` = Flex Alert active for that hour; `Value=0` = not active. |
+
+The single RIN supports both query windows:
+
+- `?QueryType=realtime` — 72-hour window starting at midnight Pacific on the request date, blending observed past hours and forecast upcoming hours into one continuous series.
+- `?QueryType=alldata` — 90-day historical window ending at 23:59:59 PT on Day+2.
+
+For data beyond 90 days, use the [historicaldata endpoint](../apis/historical/openapi.yaml). Authentication is no longer required for any of these GET calls.
+
+### v1.0 (retired 2026-06-22)
+
+In v1.0, MIDAS provided three Flex Alert RINs, all pass-through from CAISO:
 
 | RIN | Description |
 |-----|-------------|
 | `USCA-FLEX-FXRT-0000` | **Real-time** — queries CAISO at the moment of the API call; returns whether a Flex Alert is currently active |
 | `USCA-FLEX-FXFC-0000` | **Forecast** — queries CAISO for any planned upcoming Flex Alerts |
-| `USCA-FLEX-FXHT-0000` | **Historical** — archived Flex Alert records from the HistoricalData table |
+| `USCA-FLEX-FXHT-0000` | **Historical** — archived Flex Alert records from the HistoricalData table (this RIN was non-functional in v1.0) |
 
 ### Data shape
 
@@ -34,15 +51,17 @@ Each Flex Alert value interval contains:
 |-------|---------|-------|
 | Name | `"Statewide Flex Alert 09.05.2022"` | Human-readable label |
 | Date | `2022-09-05` | Date of the alert |
-| Time window | `16:00–21:00` | Conservation window (typically late afternoon to evening) |
-| Price | `1.0` | Binary indicator — `1.0` = alert active, `0.0` = no alert |
-| Unit | `"Event"` (real-time) or `""` (historical) | Inconsistent across RIN types |
+| Time window | `16:00–21:00` (v1.0); 1-hour buckets (v2.0) | Conservation window (v1.0); hourly grid (v2.0) |
+| Value | `1.0` | Binary indicator — `1.0` = alert active, `0.0` = no alert |
+| Unit | `"Event"` (v1.0 real-time) / `""` (v1.0 historical) / TBD (v2.0) | v1.0 unit was inconsistent across RIN types; v2.0 unit to be verified against live API after 2026-06-22 |
 
-### Historical data limitations
+### Historical data limitations (v1.0)
 
 The MIDAS HistoricalData table contains only **10 Flex Alert records**, all from the **September 2022 heatwave** (August 31 – September 9, 2022). Querying the full date range back to 2000 returns only these 10 days — the 125 Flex Alert days from 2000–2021 were never backfilled into MIDAS.
 
 For a complete historical record, see the [CAISO Grid Emergencies History Report](https://www.caiso.com/documents/grid-emergencies-history-report-1998-to-present.pdf) (PDF), which covers all grid emergency events from 1998 to present.
+
+Whether v2.0's `USCA-FLEX-ALRT-0000?QueryType=alldata` returns the same 10-record set or backfills more history is unverified — to be checked against the live API after 2026-06-22.
 
 ## Historical Summary
 

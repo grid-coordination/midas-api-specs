@@ -6,8 +6,8 @@
   "$defs": {
     "signalType": {
       "type": ["string", "null"],
-      "enum": ["Rates", "GHG", "Flex Alert", null],
-      "description": "Human-readable signal type returned in RIN list queries. Null for GHG and Flex Alert entries in live API responses."
+      "enum": ["Rates", "Electricity Rates", "GHG", "Flex Alert", null],
+      "description": "Human-readable signal type returned in RIN list queries. v1.0 used 'Rates' for electricity rates; v2.0 (2026-06-22) renames this to 'Electricity Rates'. Null for GHG and Flex Alert entries in v1.0 live responses."
     },
     "signalTypeParam": {
       "type": "integer",
@@ -16,8 +16,8 @@
     },
     "rateType": {
       "type": "string",
-      "enum": ["TOU", "CPP", "RTP", "DSR", "VPP", "V-D", "C-D", "R-D", "T-D", "GHG"],
-      "description": "Rate classification code. TOU=Time of Use, CPP=Critical Peak Pricing, RTP=Real-Time Pricing, DSR=Demand Side Response, VPP=Virtual Power Plant, V-D/C-D/R-D/T-D=Volumetric/Capacity/Revenue/Transmission Delivery, GHG=Greenhouse Gas."
+      "enum": ["TOU", "CPP", "RTP", "DSR", "VPP", "V-D", "C-D", "R-D", "T-D", "GHG", "MOER"],
+      "description": "Rate classification code. TOU=Time of Use, CPP=Critical Peak Pricing, RTP=Real-Time Pricing, DSR=Demand Side Response, VPP=Virtual Power Plant, V-D/C-D/R-D/T-D=Volumetric/Capacity/Revenue/Transmission Delivery, GHG=Greenhouse Gas (v1.0 SGRT/SGFC/SGHT), MOER=Marginal Operating Emissions Rate (v2.0 SGIP GHG)."
     },
     "sector": {
       "type": "string",
@@ -31,8 +31,8 @@
     },
     "unit": {
       "type": "string",
-      "enum": ["$/kWh", "$/kW", "export $/kWh", "backup $/kWh", "kg/kWh CO2", "$/kvarh", "Event", "Level"],
-      "description": "Value unit from the MIDAS Unit lookup table."
+      "enum": ["$/kWh", "$/kW", "export $/kWh", "backup $/kWh", "kg/kWh CO2", "g/kWh CO2", "$/kvarh", "Event", "Level"],
+      "description": "Value unit from the MIDAS Unit lookup table. v1.0 reported GHG in 'kg/kWh CO2'; v2.0 (2026-06-22) reports GHG in 'g/kWh CO2' (values are 1000× larger for the same physical reading)."
     },
     "dayTypeInteger": {
       "type": "integer",

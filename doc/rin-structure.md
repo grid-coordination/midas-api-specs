@@ -72,35 +72,57 @@ Identifies the rate schedule or signal type. Known patterns:
 
 **Flex Alert signals** (from CAISO):
 
-| Code | Description |
-|------|-------------|
-| `FXRT` | Real-time |
-| `FXFC` | Forecast |
-| `FXHT` | Historical |
+| Code | Description | Versions |
+|------|-------------|----------|
+| `FXRT` | Real-time | v1.0 only |
+| `FXFC` | Forecast | v1.0 only |
+| `FXHT` | Historical | v1.0 only (non-functional) |
+| `ALRT` | Unified Flex Alert (binary hourly: 1=active, 0=inactive) | v2.0 |
 
 **SGIP GHG emissions** (from WattTime):
 
-| Code | Description |
-|------|-------------|
-| `SGRT` | Real-time |
-| `SGFC` | Forecast |
-| `SGHT` | Historical |
+| Code | Description | Versions |
+|------|-------------|----------|
+| `SGRT` | Real-time | v1.0 only |
+| `SGFC` | Forecast | v1.0 only |
+| `SGHT` | Historical | v1.0 only |
+| `MOER` | Marginal Operating Emissions Rate (combines past observed, current, and forecast in one continuous 5-minute series) | v2.0 |
+
+> **v2.0 consolidation** (effective 2026-06-22): The three `SG*` GHG codes are replaced by a single `MOER` code per region, and the three `FX*` Flex Alert codes are replaced by a single `ALRT` code. The v2.0 `realtime` query returns a 72-hour window covering past, present, and forecast in one call. See [doc/v2-migration.md](v2-migration.md) and the [Flex Alerts doc](flex-alerts.md).
 
 ### Segment 4: Location (1–10 alphanumeric)
 
-A location or instance identifier. For most rate RINs this is `0000` or `0000000000`. For GHG emissions RINs, the location identifies a [WattTime grid region](https://sgipsignal.com/grid-regions) — there are 11 regions across California, yielding 33 GHG RINs (real-time + forecast + historical for each region).
+A location or instance identifier. For most rate RINs this is `0000` or `0000000000`. For GHG emissions RINs, the location identifies a [WattTime grid region](https://sgipsignal.com/grid-regions) — there are 11 regions across California, yielding 33 v1.0 GHG RINs (real-time, forecast, and historical for each region) and 11 v2.0 `MOER` RINs (one per region).
+
+**SGIP GHG region codes** (used in segment 4 of `MOER` RINs, and in the v1.0 `SG*` RINs):
+
+| Code | Region |
+|------|--------|
+| `PACW` | PacifiCorp West |
+| `SDGE` | CAISO — SDG&E |
+| `PGE` | CAISO — PG&E |
+| `P2` | BANC — P2 (v2.0; v1.0 used `BANC` for the same region) |
+| `TID` | Turlock Irrigation District |
+| `SMUD` | BANC — SMUD |
+| `IID` | Imperial Irrigation District |
+| `NVENERGY` | NV Energy |
+| `WALC` | Western Area Lower Colorado |
+| `SCE` | CAISO — SCE |
+| `LADWP` | LADWP |
 
 ## Special RINs
 
 Certain RINs have fixed, well-known values:
 
-| RIN | Description |
-|-----|-------------|
-| `USCA-FLEX-FXRT-0000` | Flex Alert — real-time (pass-through from CAISO) |
-| `USCA-FLEX-FXFC-0000` | Flex Alert — forecast (pass-through from CAISO) |
-| `USCA-FLEX-FXHT-0000` | Flex Alert — historical |
-| `USCA-SGIP-SGxx-{region}` | GHG emissions for a WattTime region (`xx` = RT/FC/HT) |
-| `USCA-TSTS-TTOU-TEST` | Test rate (used in API documentation examples) |
+| RIN | Description | Versions |
+|-----|-------------|----------|
+| `USCA-FLEX-ALRT-0000` | Flex Alert — unified binary hourly signal | v2.0 |
+| `USCA-SGIP-MOER-{region}` | GHG emissions for a WattTime region — combined past/current/forecast | v2.0 |
+| `USCA-FLEX-FXRT-0000` | Flex Alert — real-time (pass-through from CAISO) | v1.0 |
+| `USCA-FLEX-FXFC-0000` | Flex Alert — forecast (pass-through from CAISO) | v1.0 |
+| `USCA-FLEX-FXHT-0000` | Flex Alert — historical (non-functional in v1.0) | v1.0 |
+| `USCA-SGIP-SGxx-{region}` | GHG emissions for a WattTime region (`xx` = RT/FC/HT) | v1.0 |
+| `USCA-TSTS-TTOU-TEST` | Test rate (used in API documentation examples) | both |
 
 ## Examples
 
