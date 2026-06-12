@@ -7,7 +7,7 @@ This repo's `main` branch tracks v1.0 spec until release day, when a `v2` branch
 ## Sources
 
 - **Upstream announcement**: MIDAS team email, 2026-06-11, "MIDAS v2.0 — Updates for Data Consumers (June 22nd Release)"
-- **Consumer change guide**: CEC's "MIDAS v2.0 — Change Guide for Data Consumers" distributed with the announcement
+- **Consumer change guide**: CEC's "MIDAS v2.0 — Change Guide for Data Consumers" distributed with the announcement — reproduced verbatim at [cec-v2-change-guide.md](cec-v2-change-guide.md)
 - **Contact for questions**: <midas@energy.ca.gov>
 
 ## 1. Authentication

@@ -2,7 +2,7 @@
 
 Machine-readable specifications for the California Energy Commission's [Market Informed Demand Automation Server (MIDAS)](https://midasapi.energy.ca.gov/), which provides access to utilities' time-varying rates, GHG emission signals, and California ISO Flex Alerts.
 
-> **MIDAS v2.0 releases 2026-06-22.** GET endpoints become unauthenticated, GHG units change from `kg/kWh CO2` to `g/kWh CO2` (values 1000× larger), the SGIP GHG and Flex Alert RINs are consolidated, and the RIN-list response shape changes. See [doc/v2-migration.md](doc/v2-migration.md) for the full spec-level delta. This `main` branch tracks v1.0 until release day; breaking changes will land on a `v2` branch.
+> **MIDAS v2.0 releases 2026-06-22.** GET endpoints become unauthenticated, GHG units change from `kg/kWh CO2` to `g/kWh CO2` (values 1000× larger), the SGIP GHG and Flex Alert RINs are consolidated, and the RIN-list response shape changes. See [doc/v2-migration.md](doc/v2-migration.md) for the spec-level delta and [doc/cec-v2-change-guide.md](doc/cec-v2-change-guide.md) for the CEC's official consumer-facing change guide. This `main` branch tracks v1.0 until release day; breaking changes will land on a `v2` branch.
 
 ## Disclaimer
 
@@ -34,6 +34,7 @@ doc/
   flex-alerts.md            # Flex Alert signals, CAISO escalation ladder, and history
   datetime-and-timezone.md  # Wire-format datetime conventions (UTC vs PT — empirically verified)
   v2-migration.md           # MIDAS v2.0 (2026-06-22) spec-level delta and migration phases
+  cec-v2-change-guide.md    # CEC's official consumer-facing change guide, reproduced verbatim
 ```
 
 Each API directory follows the same convention:
