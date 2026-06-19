@@ -49,8 +49,10 @@ paths:
         `USCA-SGIP-MOER-{REGION}` RINs carry only post-2026-06-22 readings.
         The CEC has not confirmed whether the legacy 33 RINs
         (`USCA-SGIP-{SGRT,SGFC,SGHT}-{REGION}`) remain queryable for earlier
-        ranges. For pre-migration GHG history, query the WattTime API directly
-        or await a future CEC data migration. (This means the archived-data
+        ranges. For pre-migration GHG history, the canonical source is the
+        SGIP Signal bulk download (https://content.sgipsignal.com/download-data/,
+        CSV), or the WattTime API directly; a future CEC data migration may
+        also follow. (This means the archived-data
         normalization questions — `g/kWh CO2` units, `Value` casing, UTC
         timestamps, long-form `SignalType` labels — do not yet apply to
         historical GHG, as no GHG history has been migrated.)
