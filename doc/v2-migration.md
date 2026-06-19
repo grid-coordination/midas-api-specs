@@ -110,6 +110,8 @@ Note the BANC region code changes from `BANC` (v1.0) to `P2` (v2.0). All other r
 
 `MOER` realtime responses are a continuous 5-minute time series blending past observed data, current readings, and WattTime forecast.
 
+**Historical GHG continuity (CEC clarification, 2026-06-19).** Pre-migration SGIP GHG history is **not** migrated at the v2.0 cutover. The new `USCA-SGIP-MOER-{REGION}` RINs carry only post-2026-06-22 readings, so `GET /historicaldata/{rate_id}` against a MOER RIN returns no data for dates before the release. The CEC is still deciding how to handle the legacy history — either transformations migrated to AWS in a later upgrade, or directing consumers to query the [WattTime API](https://watttime.org/) directly — and did not confirm whether the legacy 33 RINs (`USCA-SGIP-{SGRT,SGFC,SGHT}-{REGION}`) stay queryable for earlier ranges. Consequently the archived-data normalization question (whether old readings are served as `g/kWh CO2` / `Value` / UTC / long-form labels, or as originally stored) is unanswered for GHG: there is no migrated GHG history to normalize. Flex Alert (`ALRT`) and electricity-rate history are unaffected by this caveat.
+
 ### Flex Alert: 3 RINs → 1 RIN
 
 | v1.0 RINs | v2.0 RIN |
@@ -136,9 +138,15 @@ The six pre-release open questions were clarified by the CEC MIDAS team on 2026-
 
 6. **Wire timezone for `DateStart`/`TimeStart` in `ValueInformation`**: **UTC in v2.0 for all signal types.** The v1.0 PT-on-wire behavior we observed for SGIP GHG and Flex Alert was a documented bug — those datapoints were thin pass-throughs of the WattTime and CAISO upstream APIs (both natively PT) and MIDAS v1.0 did not convert before delivery. v1.0 electricity-rate RINs were always UTC. v2.0 converts upstream-provider timestamps to UTC before delivery. Window boundaries remain PT-aligned but are expressed in UTC: midnight Pacific = `07:00:00` UTC during PDT, `08:00:00` UTC during PST. See `doc/datetime-and-timezone.md` for the per-field inventory and consumer guidance.
 
+### Follow-up (CEC reply, 2026-06-19)
+
+1. **Cutover timing**: the transition happens **between 9 and 11 am Pacific on Monday 2026-06-22** (likely before 11). The CEC will send a mass email when the transition is finished — gate release-day verification on that email (or check after ~11 am PT).
+
+2. **Pre-migration GHG history / archived-data normalization**: pre-migration SGIP GHG history is **not** migrated at cutover. The consolidated `MOER` RINs carry only post-release readings; the CEC is still deciding between a future AWS migration and directing consumers to WattTime, and did not confirm the legacy 33 RINs stay queryable. The archived-data normalization question is therefore unanswered for GHG (nothing migrated to normalize). See the "Historical GHG continuity" note in §6.
+
 ## 8. Migration phases
 
 1. **Pre-release (now → 2026-06-22)** — `main` branch: safe additive changes. Doc updates and enum extensions that don't break v1.0 consumers. See bd issues `midas-api-specs-{34p,3g9,a30,4gh,1v6,2in}` (all closed).
 2. **Staging (cut 2026-06-19, ahead of plan)** — `v2` branch (`midas-api-specs-b6k`) cut early so downstream repos can build against it. Breaking changes applied: GET endpoints unauthenticated (`1uu`); RIN-list keyed-object response + `midas-rin-list-response.schema.json` (`dmt`, `3os`); `value` → `Value` casing (`82u`); `realtime`/`alldata` window semantics (`cnv`); `/historicaldata/{rate_id}` path form + HistoricalList removed (`2x5`); Holiday/TimeZone already absent from the lookup enums (`0zo`, no-op); `/Holiday` flagged retirement-planned, pending live check (`ym3`). With §7 resolved by CEC, the only on-the-day verification needed is smoke-testing a live v2.0 response per signal type and confirming the documented behavior.
-3. **Release day (2026-06-22)** — Live smoke-test `v2` against production per signal type; confirm `Value` casing, keyed RIN-list shape, UTC window boundaries, and the `/Holiday` endpoint's fate. Regenerate examples against live data (`midas-api-specs-cay`).
+3. **Release day (2026-06-22)** — Cutover runs 9–11 am PT; **wait for the CEC's "transition complete" mass email** (or verify after ~11 am PT) before testing. Live smoke-test `v2` against production per signal type; confirm `Value` casing, keyed RIN-list shape, UTC window boundaries, the `/Holiday` endpoint's fate, and that `historicaldata` against a `MOER` RIN returns no pre-release data (per the §6 GHG-history caveat). Regenerate examples against live data (`midas-api-specs-cay`).
 4. **Post-release** — Tag spec `v1.0.0` (`midas-api-specs-2d7`) as a frozen v1 baseline. Merge `v2` to `main` and bump the release version.

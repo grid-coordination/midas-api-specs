@@ -41,9 +41,19 @@ paths:
         v2.0: the RIN is supplied as a path parameter (`/historicaldata/{rate_id}`),
         GET is unauthenticated, and the maximum range per call is **6 months**.
 
-        Note: Only historical RINs may be queried here. For GHG and Flex
-        Alert data, use the consolidated v2.0 RINs (`USCA-SGIP-MOER-{REGION}`,
-        `USCA-FLEX-ALRT-0000`).
+        Note: Only historical RINs may be queried here. For Flex Alert data,
+        use the consolidated v2.0 RIN `USCA-FLEX-ALRT-0000`.
+
+        **SGIP GHG history caveat (CEC, 2026-06-19):** pre-migration SGIP GHG
+        history is **not** migrated at the v2.0 cutover. The consolidated
+        `USCA-SGIP-MOER-{REGION}` RINs carry only post-2026-06-22 readings.
+        The CEC has not confirmed whether the legacy 33 RINs
+        (`USCA-SGIP-{SGRT,SGFC,SGHT}-{REGION}`) remain queryable for earlier
+        ranges. For pre-migration GHG history, query the WattTime API directly
+        or await a future CEC data migration. (This means the archived-data
+        normalization questions — `g/kWh CO2` units, `Value` casing, UTC
+        timestamps, long-form `SignalType` labels — do not yet apply to
+        historical GHG, as no GHG history has been migrated.)
       operationId: getHistoricalData
       security:
         - {}
