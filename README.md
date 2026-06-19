@@ -96,6 +96,14 @@ print('OK')
 
 Release history and behavioral changes are tracked in [CHANGELOG.md](CHANGELOG.md). The spec version tracks the MIDAS API major version it documents (`1.0.0` = MIDAS v1.0; `2.0.0` = MIDAS v2.0).
 
+## Contributing
+
+Issues, Discussions, and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow (and the validation commands). In short:
+
+- **Questions, modeling judgment calls, MIDAS-quirk interpretation** → [Discussions](https://github.com/grid-coordination/midas-api-specs/discussions)
+- **Specs that disagree with the live API, missing coverage, schema bugs, doc errors** → [Issues](https://github.com/grid-coordination/midas-api-specs/issues) (please include the request and the actual JSON response)
+- **Patches** → pull requests; open a Discussion or Issue first for non-trivial changes, and target the branch matching the MIDAS API version (`main` = v1.0, `v2` = v2.0)
+
 ## License
 
 [MIT License](LICENSE) — Copyright (c) 2026 Clark Communications Corporation
