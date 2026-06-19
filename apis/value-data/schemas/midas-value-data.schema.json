@@ -4,7 +4,7 @@
   "title": "MIDAS ValueData",
   "description": "A single time-series interval with a price or emissions value.",
   "type": "object",
-  "required": ["ValueName", "DateStart", "DateEnd", "DayStart", "DayEnd", "TimeStart", "TimeEnd", "value", "Unit"],
+  "required": ["ValueName", "DateStart", "DateEnd", "DayStart", "DayEnd", "TimeStart", "TimeEnd", "Value", "Unit"],
   "additionalProperties": false,
   "properties": {
     "ValueName": {
@@ -14,7 +14,7 @@
     "DateStart": {
       "type": "string",
       "format": "date",
-      "description": "Date of interval start in UTC (ISO 8601)."
+      "description": "Date of interval start in UTC (ISO 8601). In v2.0 (2026-06-22) MIDAS normalizes all wire datetimes to UTC across every signal type; the v1.0 PT-on-wire quirk for SGIP GHG and Flex Alert is gone."
     },
     "DateEnd": {
       "type": "string",
@@ -45,13 +45,13 @@
       "pattern": "^\\d{2}:\\d{2}(:\\d{2})?$",
       "description": "Time of interval end in UTC. Usually HH:MM:SS but Flex Alert responses use HH:MM."
     },
-    "value": {
+    "Value": {
       "type": "number",
-      "description": "The price or emissions value for this interval. Note: lowercase in GET responses despite upstream docs showing uppercase 'Value'."
+      "description": "The price or emissions value for this interval. v2.0 (2026-06-22) standardizes the field name as 'Value' (capital V), correcting the v1.0 lowercase 'value' quirk. SGIP GHG values are 1000× larger than v1.0 because the unit changed from kg/kWh to g/kWh CO2."
     },
     "Unit": {
       "$ref": "midas-enums.schema.json#/$defs/unit",
-      "description": "Unit for the value."
+      "description": "Unit for the value. SGIP GHG entries report 'g/kWh CO2' in v2.0 (was 'kg/kWh CO2' in v1.0)."
     }
   }
 }

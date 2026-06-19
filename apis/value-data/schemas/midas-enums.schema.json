@@ -5,9 +5,9 @@
   "description": "Shared enumerations for the MIDAS API, derived from lookup tables.",
   "$defs": {
     "signalType": {
-      "type": ["string", "null"],
-      "enum": ["Rates", "Electricity Rates", "GHG", "Flex Alert", null],
-      "description": "Human-readable signal type returned in RIN list queries. v1.0 used 'Rates' for electricity rates; v2.0 (2026-06-22) renames this to 'Electricity Rates'. Null for GHG and Flex Alert entries in v1.0 live responses."
+      "type": "string",
+      "enum": ["Electricity Rates", "Greenhouse Gas Emissions", "California Independent System Operator Flex Alert"],
+      "description": "Human-readable signal type returned in RIN list queries (v2.0, 2026-06-22). v2.0 populates this field for every entry: electricity rates report 'Electricity Rates' (v1.0 'Rates'), SGIP GHG/MOER entries report 'Greenhouse Gas Emissions' (v1.0 returned null), and Flex Alert/ALRT entries report 'California Independent System Operator Flex Alert' (v1.0 returned null)."
     },
     "signalTypeParam": {
       "type": "integer",

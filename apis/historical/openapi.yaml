@@ -1,10 +1,16 @@
 openapi: 3.1.0
 info:
   title: MIDAS Historical API
-  version: 0.1.0
+  version: 2.0.0
   description: |
-    Unofficial OpenAPI specification for the MIDAS HistoricalData and
-    HistoricalList endpoints.
+    Unofficial OpenAPI specification for the MIDAS HistoricalData endpoint.
+
+    **This is the MIDAS v2.0 spec (CEC release 2026-06-22).** Two breaking
+    changes from v1.0: (1) the endpoint moves from `GET /HistoricalData?id={rin}`
+    to `GET /historicaldata/{rate_id}` (RIN is now a path parameter), and
+    (2) the `HistoricalList` operation is removed — use
+    `GET /valuedata?SignalType=0` for the full active RIN list. GET calls are
+    also unauthenticated in v2.0.
 
     Derived from the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS)
     and validated against the live API at https://midasapi.energy.ca.gov/.
@@ -23,58 +29,8 @@ servers:
   - url: https://midasapi.energy.ca.gov/api
     description: MIDAS Production
 
-security:
-  - bearerAuth: []
-
 paths:
-  /HistoricalList:
-    get:
-      summary: List RINs with historical data for a given provider
-      description: |
-        Returns all RINs with data in the HistoricalData table for the
-        specified distribution and energy providers. Includes current and
-        discontinued rates, plus GHG and Flex Alert RINs automatically.
-
-        Note: The live API may return duplicate entries for the same RIN.
-        The response does not include the LastUpdated field that appears
-        in ValueData's RIN list — yet another inconsistency.
-      operationId: getHistoricalList
-      parameters:
-        - name: DistributionCode
-          in: query
-          required: true
-          description: Distribution provider code from the Distribution lookup table.
-          schema:
-            type: string
-          examples:
-            pgAndE:
-              value: PG
-            test:
-              value: TS
-        - name: EnergyCode
-          in: query
-          required: true
-          description: Energy provider code from the Energy lookup table.
-          schema:
-            type: string
-          examples:
-            pgAndE:
-              value: PG
-            test:
-              value: TS
-      responses:
-        '200':
-          description: Array of RIN list entries.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/HistoricalListEntry'
-        '401':
-          description: Unauthorized — missing or expired bearer token.
-
-  /HistoricalData:
+  /historicaldata/{rate_id}:
     get:
       summary: Retrieve archived rate data for a RIN within a date range
       description: |
@@ -82,12 +38,19 @@ paths:
         range. The response shape is the same RateInfo object used by the
         ValueData endpoint.
 
+        v2.0: the RIN is supplied as a path parameter (`/historicaldata/{rate_id}`),
+        GET is unauthenticated, and the maximum range per call is **6 months**.
+
         Note: Only historical RINs may be queried here. For GHG and Flex
-        Alert data, use the corresponding historical RINs (SGHT, FXHT).
+        Alert data, use the consolidated v2.0 RINs (`USCA-SGIP-MOER-{REGION}`,
+        `USCA-FLEX-ALRT-0000`).
       operationId: getHistoricalData
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
-        - name: id
-          in: query
+        - name: rate_id
+          in: path
           required: true
           description: The Rate Identification Number (RIN).
           schema:
@@ -95,6 +58,8 @@ paths:
           examples:
             test:
               value: USCA-TSTS-TTOU-TEST
+            moer:
+              value: USCA-SGIP-MOER-PGE
         - name: startdate
           in: query
           required: true
@@ -108,7 +73,10 @@ paths:
         - name: enddate
           in: query
           required: true
-          description: End date for the period of interest (ISO 8601 date).
+          description: |
+            End date for the period of interest (ISO 8601 date). The maximum
+            range per call is 6 months (`enddate` − `startdate`); split larger
+            ranges across multiple calls.
           schema:
             type: string
             format: date
@@ -125,48 +93,19 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RateInfo'
-        '401':
-          description: Unauthorized — missing or expired bearer token.
+        '404':
+          description: Not found — unknown RIN, or no historical data for the given range.
 
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
-      description: 10-minute bearer token from the /Token endpoint.
+      description: |
+        10-minute bearer token from the /Token endpoint. Not required for GET
+        in v2.0 (retained for upload operations documented elsewhere).
 
   schemas:
-    HistoricalListEntry:
-      type: object
-      description: |
-        A RIN entry from the HistoricalList endpoint. Same shape as the
-        ValueData RIN list but without the LastUpdated field.
-      required:
-        - RateID
-        - SignalType
-        - Description
-      properties:
-        RateID:
-          type: string
-          description: The Rate Identification Number (RIN).
-          examples:
-            - USCA-TSTS-TTOU-TEST
-        SignalType:
-          type:
-            - string
-            - 'null'
-          description: Human-readable signal type. Null for GHG and Flex Alert entries in live API responses.
-          enum:
-            - Rates
-            - GHG
-            - Flex Alert
-            - null
-        Description:
-          type: string
-          description: Human-readable description including distribution and energy providers.
-          examples:
-            - "Rate Data for Distributor: Test, Energy Company: Test"
-
     RateInfo:
       description: |
         Reuses the same shape as the ValueData RateInfo response.
@@ -231,7 +170,7 @@ components:
         - DateEnd
         - TimeStart
         - TimeEnd
-        - value
+        - Value
         - Unit
       properties:
         ValueName:
@@ -254,7 +193,7 @@ components:
           type: string
         TimeEnd:
           type: string
-        value:
+        Value:
           type: number
         Unit:
           type: string

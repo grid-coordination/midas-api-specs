@@ -1,9 +1,16 @@
 openapi: 3.1.0
 info:
   title: MIDAS Holiday API
-  version: 0.1.0
+  version: 2.0.0
   description: |
     Unofficial OpenAPI specification for the MIDAS Holiday endpoint.
+
+    **v2.0 status (CEC release 2026-06-22): retained but on a deprecation path.**
+    The v2.0 change guide removes the `?LookupTable=Holiday` lookup table, but
+    per CEC clarification (2026-06-12) the standalone `/Holiday` endpoint is kept
+    for now with retirement planned; the final decision will come in a later CEC
+    documentation update. This spec retains the endpoint pending a live check on
+    or after release day (bd midas-api-specs-ym3).
 
     Derived from the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS)
     and validated against the live API at https://midasapi.energy.ca.gov/.

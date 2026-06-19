@@ -2,7 +2,7 @@
 
 The California Energy Commission is releasing **MIDAS v2.0 on 2026-06-22**. This document is the spec-level delta between v1.0 and v2.0: which schema files, OpenAPI paths, and JSON fields change, and what verification is still outstanding. For end-user migration narrative, see the CEC's Change Guide for Data Consumers and the upstream announcement email.
 
-This repo's `main` branch tracks v1.0 spec until release day, when a `v2` branch will carry the breaking changes (see bd issue `midas-api-specs-b6k`). Safe additive changes (enum extensions, doc notes flagging upcoming behavior) are landing on `main` ahead of time.
+This repo's `main` branch tracks the v1.0 spec; the **`v2` branch carries the breaking changes** (see bd issue `midas-api-specs-b6k`). The `v2` branch was cut early — on 2026-06-19, three days ahead of release — so downstream API repos (e.g. `clj-midas`) can stage their own v2.0 feature branches against it. The breaking changes on `v2` reflect the CEC change guide and the resolved clarifications (§7); a live smoke-test against the production v2.0 API on release day (2026-06-22) is the remaining gate before merge. Safe additive changes (enum extensions, doc notes flagging upcoming behavior) already landed on `main` ahead of time.
 
 ## Sources
 
@@ -139,5 +139,6 @@ The six pre-release open questions were clarified by the CEC MIDAS team on 2026-
 ## 8. Migration phases
 
 1. **Pre-release (now → 2026-06-22)** — `main` branch: safe additive changes. Doc updates and enum extensions that don't break v1.0 consumers. See bd issues `midas-api-specs-{34p,3g9,a30,4gh,1v6,2in}` (all closed).
-2. **Release day (2026-06-22)** — Cut `v2` branch (`midas-api-specs-b6k`). Apply breaking changes. With §7 resolved by CEC, the only on-the-day verification needed is smoke-testing a live v2.0 response per signal type and confirming the documented behavior. See bd issues `midas-api-specs-{1uu,dmt,3os,82u,cnv,2x5,0zo,ym3}`.
-3. **Post-release** — Regenerate examples (`midas-api-specs-cay`). Tag spec `v1.0.0` (`midas-api-specs-2d7`) as a frozen v1 baseline. Merge `v2` to `main`.
+2. **Staging (cut 2026-06-19, ahead of plan)** — `v2` branch (`midas-api-specs-b6k`) cut early so downstream repos can build against it. Breaking changes applied: GET endpoints unauthenticated (`1uu`); RIN-list keyed-object response + `midas-rin-list-response.schema.json` (`dmt`, `3os`); `value` → `Value` casing (`82u`); `realtime`/`alldata` window semantics (`cnv`); `/historicaldata/{rate_id}` path form + HistoricalList removed (`2x5`); Holiday/TimeZone already absent from the lookup enums (`0zo`, no-op); `/Holiday` flagged retirement-planned, pending live check (`ym3`). With §7 resolved by CEC, the only on-the-day verification needed is smoke-testing a live v2.0 response per signal type and confirming the documented behavior.
+3. **Release day (2026-06-22)** — Live smoke-test `v2` against production per signal type; confirm `Value` casing, keyed RIN-list shape, UTC window boundaries, and the `/Holiday` endpoint's fate. Regenerate examples against live data (`midas-api-specs-cay`).
+4. **Post-release** — Tag spec `v1.0.0` (`midas-api-specs-2d7`) as a frozen v1 baseline. Merge `v2` to `main` and bump the release version.
