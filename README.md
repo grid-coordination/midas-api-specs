@@ -92,6 +92,10 @@ print('OK')
 "
 ```
 
+## Changelog
+
+Release history and behavioral changes are tracked in [CHANGELOG.md](CHANGELOG.md). The spec version tracks the MIDAS API major version it documents (`1.0.0` = MIDAS v1.0; `2.0.0` = MIDAS v2.0).
+
 ## License
 
 [MIT License](LICENSE) — Copyright (c) 2026 Clark Communications Corporation
