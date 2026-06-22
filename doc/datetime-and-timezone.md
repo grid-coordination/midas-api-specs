@@ -48,7 +48,7 @@ verified empirically against the live API.
 | `LastUpdated` (ValueData RIN-list entries) | Bare ISO 8601, no zone suffix | TBD — verify after release | TBD |
 | `DateStart` / `DateEnd` (ValueInformation, **all** signal types) | Bare `YYYY-MM-DD` | **UTC** | first realtime datapoint of "today" carries the UTC date that maps to midnight Pacific |
 | `TimeStart` / `TimeEnd` (ValueInformation, **all** signal types) | Bare `HH:MM:SS` | **UTC** | first realtime datapoint is `"07:00:00"` (PDT) or `"08:00:00"` (PST), i.e. midnight Pacific converted to UTC |
-| `DateOfHoliday` (Holiday response — if `/Holiday` endpoint is retained) | TBD | TBD | retirement decision pending per CEC |
+| `DateOfHoliday` (Holiday response) | — | — | **Standalone `/Holiday` endpoint retired in v2.0** — no Holiday response on the wire |
 
 ## How this was verified (v1.0)
 
@@ -113,10 +113,11 @@ When parsing MIDAS responses:
          .atZone(ZoneId.of("America/Los_Angeles"))
      ```
 
-3. **Other bare fields** (`LastUpdated`, `DateOfHoliday`): empirically PT
-   in v1.0. v2.0 behavior for these specific fields was not addressed by
-   the CEC explicitly — to be re-verified after the release. Until
-   verified, continue treating them as `America/Los_Angeles` local.
+3. **Other bare fields** (`LastUpdated`; and `DateOfHoliday` in v1.0 only,
+   as the standalone `/Holiday` endpoint is retired in v2.0): empirically PT
+   in v1.0. v2.0 behavior for `LastUpdated` was not addressed by the CEC
+   explicitly — to be re-verified after the release. Until verified,
+   continue treating it as `America/Los_Angeles` local.
 
 4. **Display in another zone**: parse first, then `atZoneSameInstant` to
    the target zone. The instant is preserved; only the wall-clock
@@ -157,7 +158,8 @@ Pacific Time, and v1.0 forwarded their timestamps unchanged. The CEC has
 acknowledged this as an oversight and v2.0 normalizes everything to UTC
 by converting upstream-provider timestamps before delivery.
 
-The remaining `LastUpdated` and `DateOfHoliday` PT-on-wire behavior is
+The remaining `LastUpdated` PT-on-wire behavior (and `DateOfHoliday` in
+v1.0, before the standalone `/Holiday` endpoint was retired in v2.0) is
 likely a similar artifact (administrative timestamps written in PT and
 never tagged with a zone) and may or may not be addressed in v2.0 — TBD.
 

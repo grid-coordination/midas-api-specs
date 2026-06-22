@@ -2,13 +2,13 @@
 
 Machine-readable specifications for the California Energy Commission's [Market Informed Demand Automation Server (MIDAS)](https://midasapi.energy.ca.gov/), which provides access to utilities' time-varying rates, GHG emission signals, and California ISO Flex Alerts.
 
-> **You are on the `v2` branch — this is the MIDAS v2.0 spec (CEC release 2026-06-22), staged ahead of release.** GET endpoints are unauthenticated, GHG units change from `kg/kWh CO2` to `g/kWh CO2` (values 1000× larger), the SGIP GHG and Flex Alert RINs are consolidated, the RIN-list response is a keyed object, the value field is `Value`, and all wire datetimes are UTC. The breaking changes here are derived from the CEC change guide and confirmed clarifications, but await a live smoke-test against the production v2.0 API on release day before merge (examples are illustrative; the standalone `/Holiday` endpoint's fate needs a live check). See [doc/v2-migration.md](doc/v2-migration.md) for the spec-level delta and [doc/cec-v2-change-guide.md](doc/cec-v2-change-guide.md) for the CEC's official consumer-facing change guide. The `main` branch tracks v1.0 until this branch is verified and merged.
+> **You are on the `v2` branch — this is the MIDAS v2.0 spec (CEC release 2026-06-22), staged ahead of release.** GET endpoints are unauthenticated, GHG units change from `kg/kWh CO2` to `g/kWh CO2` (values 1000× larger), the SGIP GHG and Flex Alert RINs are consolidated, the RIN-list response is a keyed object, the value field is `Value`, and all wire datetimes are UTC. The breaking changes here are derived from the CEC change guide and confirmed clarifications, but await a live smoke-test against the production v2.0 API on release day before merge (examples are illustrative). See [doc/v2-migration.md](doc/v2-migration.md) for the spec-level delta and [doc/cec-v2-change-guide.md](doc/cec-v2-change-guide.md) for the CEC's official consumer-facing change guide. The `main` branch tracks v1.0 until this branch is verified and merged.
 
 ## Disclaimer
 
 **These are not official CEC artifacts.** The OpenAPI specifications and JSON Schemas in this repository were derived from the publicly available [MIDAS documentation](https://github.com/california-energy-commission/MIDAS) and are provided here on a best-effort basis. They may be incomplete, inaccurate, or out of date relative to the actual API behavior.
 
-In an ideal world, API providers would publish machine-readable specifications alongside their documentation — enabling client code generation, automated testing, and robust integrations. Since the CEC has not yet seen fit to do so, we have done it for them. You're welcome, CEC.
+As of the v2.0 release, the CEC publishes its own auto-generated OpenAPI document at [`https://midasapi.energy.ca.gov/openapi.json`](https://midasapi.energy.ca.gov/openapi.json) (Swagger UI at [`/docs`](https://midasapi.energy.ca.gov/docs)). That document is authoritative for the endpoint inventory, request parameters, and the write/admin side of the API — but it does not model the GET **response** bodies that data consumers actually parse (the keyed RIN-list object, `ValueInformation` intervals, the `Value` field, and the GHG and Flex Alert structures). Those consumer-facing response shapes — with strict validation (`additionalProperties: false`) and worked examples — are what this repository adds.
 
 For additional perspective on MIDAS's architectural choices — including the fact that the MIDAS service protocol and RIN are not standards, that the protocol lacks publish/subscribe support, and that no other jurisdiction uses or is likely to use it — see our [response to CEC Docket #24-FDAS-03](https://grid-coordination.github.io/policy/24-fdas-03).
 
@@ -24,9 +24,6 @@ apis/
     openapi.yaml
   registration/      # Registration API (public, POST only)
     openapi.yaml
-  holiday/           # Holiday API (authenticated)
-    openapi.yaml
-    examples/
   historical/        # HistoricalData & HistoricalList APIs (authenticated)
     openapi.yaml
 doc/
@@ -52,11 +49,11 @@ Each API directory follows the same convention:
 | **ValueData** | Bearer token | Open (GET) | Specified | Query rate, GHG, and Flex Alert data by [RIN](doc/rin-structure.md); list RINs; retrieve lookup tables. Response shape and RIN inventory change substantially in v2.0 — see [v2-migration.md](doc/v2-migration.md). |
 | **Token** | Basic Auth | Basic Auth (still works; no longer required for GET data calls) | Specified | Retrieve short-lived (10-minute) bearer tokens |
 | **Registration** | None | None | Specified | Create new user and LSE accounts (POST only) |
-| **Holiday** | Bearer token | Unverified — v2.0 may have retired this endpoint | Specified | Retrieve utility holiday schedules |
+| **Holiday** | Bearer token | **Removed in v2.0** — standalone endpoint retired (the `Holiday` day-type in rate schedules is unaffected) | Removed | Retrieve utility holiday schedules |
 | **HistoricalData** | Bearer token | Open | Specified | Retrieve archived rate information by RIN and date range. Path changes from `/HistoricalData?id=…` to `/historicaldata/{rate_id}` in v2.0. |
 | **HistoricalList** | Bearer token | **Removed in v2.0** — use `/valuedata?SignalType=0` instead | Specified | List RINs with available historical data by provider |
 
-See the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS) for the upstream API docs (such as they are).
+See the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS) for the upstream API docs, and the CEC's own [`/openapi.json`](https://midasapi.energy.ca.gov/openapi.json) for the request-side contract.
 
 ## Datetime conventions
 

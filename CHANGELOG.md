@@ -19,7 +19,7 @@ Staged on the `v2` branch ahead of release so downstream consumers can build aga
 - **Breaking — SGIP GHG and Flex Alert RIN inventory consolidated.** SGIP GHG: 33 RINs (11 regions × SGRT/SGFC/SGHT) → 11 `USCA-SGIP-MOER-{REGION}`. Flex Alert: 3 RINs (FXRT/FXFC/FXHT) → 1 `USCA-FLEX-ALRT-0000`.
 - `realtime` is now a fixed 72-hour window and `alldata` a fixed 90-day window; all wire datetimes are normalized to UTC across every signal type (the v1.0 PT-on-wire passthrough for SGIP GHG and Flex Alert is gone).
 - RIN pattern widened from `{4,10}` to `{2,10}` on the trailing segment to admit v2.0 short region codes (`P2`, `PGE`, `SCE`, `TID`, `IID`).
-- `info.version` bumped to `2.0.0` across all five specs (ValueData, Historical, Holiday, Token, Registration).
+- `info.version` bumped to `2.0.0` across all four specs (ValueData, Historical, Token, Registration).
 
 ### Added
 
@@ -29,11 +29,11 @@ Staged on the `v2` branch ahead of release so downstream consumers can build aga
 
 ### Deprecated
 
-- The v1.0 SGIP GHG (`SGRT`/`SGFC`/`SGHT`) and Flex Alert (`FXRT`/`FXFC`/`FXHT`) RINs, replaced by the consolidated `MOER` and `ALRT` RINs above.
-- The standalone `GET /Holiday` endpoint — retained at release but flagged retirement-planned per CEC clarification (final decision pending; live confirmation tracked for release day).
+- The v1.0 SGIP GHG (`SGRT`/`SGFC`/`SGHT`) and Flex Alert (`FXRT`/`FXFC`/`FXHT`) RINs, replaced by the consolidated `MOER` and `ALRT` RINs above. Confirmed retired at cutover — calls to the old RINs return `HTTP 410 Gone` (CEC "MIDAS v2.0 is Now Live" email, 2026-06-22).
 
 ### Removed
 
+- **Breaking — the standalone `GET /Holiday` endpoint.** Retired in v2.0 (CEC "MIDAS v2.0 is Now Live" email, 2026-06-22; absent from the CEC's published OpenAPI at `https://midasapi.energy.ca.gov/openapi.json`). The `apis/holiday/` spec and example are removed from this set. The `Holiday` day-type value in rate schedules (`8=Holiday`) is a separate concept and is unaffected.
 - **Breaking — the `HistoricalList` operation.** Use `GET /valuedata?SignalType=0` for the full active RIN list.
 - The `?LookupTable=Holiday` and `?LookupTable=TimeZone` lookup tables (return `404` in v2.0).
 

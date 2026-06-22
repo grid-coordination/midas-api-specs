@@ -30,7 +30,7 @@ This repo's `main` branch tracks the v1.0 spec; the **`v2` branch carries the br
 | `GET /HistoricalList?DistributionCode=&EnergyCode=` | **Removed.** Use `GET /ValueData?SignalType=0` for the full active RIN list. | |
 | `GET /ValueData?LookupTable=Holiday` | **Removed.** | |
 | `GET /ValueData?LookupTable=TimeZone` | **Removed.** | |
-| `GET /Holiday` (standalone endpoint, `apis/holiday/openapi.yaml`) | **Kept for now, retirement planned.** Per CEC clarification, the standalone endpoint is retained at release but is on a deprecation path; final decision to come in the next CEC documentation update. | |
+| `GET /Holiday` (standalone endpoint) | **Removed.** Retired at the v2.0 cutover (CEC "MIDAS v2.0 is Now Live" email, 2026-06-22; absent from the CEC's published OpenAPI). `apis/holiday/` removed from this spec set. | The `Holiday` day-type value in rate schedules (`8=Holiday`) is a separate concept and is unaffected. |
 
 ## 3. Response shape changes
 
@@ -130,7 +130,7 @@ The six pre-release open questions were clarified by the CEC MIDAS team on 2026-
 
 3. **Path casing**: **Case-insensitive in v2.0.** Both `/valuedata` and `/ValueData` work. CEC documentation will continue to use PascalCase `/ValueData` for consistency; this spec follows the same convention.
 
-4. **`/Holiday` standalone endpoint**: **Kept for now, retirement planned.** Final decision will be shared in the next CEC documentation update. The spec retains `apis/holiday/` with a note flagging planned retirement.
+4. **`/Holiday` standalone endpoint**: **Retired.** The 2026-06-12 reply flagged it "kept for now, retirement planned"; the final decision landed at cutover — the "MIDAS v2.0 is Now Live" email (2026-06-22) lists `Holiday` under *Removed endpoints*, and it is absent from the CEC's published OpenAPI. `apis/holiday/` has been removed from this spec set.
 
 5. **RIN list per-entry `SignalType` field**: **Populated, no longer null.**
    - GHG / `MOER` entries return `"Greenhouse Gas Emissions"`.
@@ -147,6 +147,6 @@ The six pre-release open questions were clarified by the CEC MIDAS team on 2026-
 ## 8. Migration phases
 
 1. **Pre-release (now → 2026-06-22)** — `main` branch: safe additive changes. Doc updates and enum extensions that don't break v1.0 consumers. See bd issues `midas-api-specs-{34p,3g9,a30,4gh,1v6,2in}` (all closed).
-2. **Staging (cut 2026-06-19, ahead of plan)** — `v2` branch (`midas-api-specs-b6k`) cut early so downstream repos can build against it. Breaking changes applied: GET endpoints unauthenticated (`1uu`); RIN-list keyed-object response + `midas-rin-list-response.schema.json` (`dmt`, `3os`); `value` → `Value` casing (`82u`); `realtime`/`alldata` window semantics (`cnv`); `/historicaldata/{rate_id}` path form + HistoricalList removed (`2x5`); Holiday/TimeZone already absent from the lookup enums (`0zo`, no-op); `/Holiday` flagged retirement-planned, pending live check (`ym3`). With §7 resolved by CEC, the only on-the-day verification needed is smoke-testing a live v2.0 response per signal type and confirming the documented behavior.
-3. **Release day (2026-06-22)** — Cutover runs 9–11 am PT; **wait for the CEC's "transition complete" mass email** (or verify after ~11 am PT) before testing. Live smoke-test `v2` against production per signal type; confirm `Value` casing, keyed RIN-list shape, UTC window boundaries, the `/Holiday` endpoint's fate, and that `historicaldata` against a `MOER` RIN returns no pre-release data (per the §6 GHG-history caveat). Regenerate examples against live data (`midas-api-specs-cay`).
+2. **Staging (cut 2026-06-19, ahead of plan)** — `v2` branch (`midas-api-specs-b6k`) cut early so downstream repos can build against it. Breaking changes applied: GET endpoints unauthenticated (`1uu`); RIN-list keyed-object response + `midas-rin-list-response.schema.json` (`dmt`, `3os`); `value` → `Value` casing (`82u`); `realtime`/`alldata` window semantics (`cnv`); `/historicaldata/{rate_id}` path form + HistoricalList removed (`2x5`); Holiday/TimeZone already absent from the lookup enums (`0zo`, no-op); standalone `/Holiday` endpoint retired and `apis/holiday/` removed (`ym3`). With §7 resolved by CEC, the only on-the-day verification needed is smoke-testing a live v2.0 response per signal type and confirming the documented behavior.
+3. **Release day (2026-06-22)** — Cutover runs 9–11 am PT; **wait for the CEC's "transition complete" mass email** (or verify after ~11 am PT) before testing. Live smoke-test `v2` against production per signal type; confirm `Value` casing, keyed RIN-list shape, UTC window boundaries, and that `historicaldata` against a `MOER` RIN returns no pre-release data (per the §6 GHG-history caveat). Regenerate examples against live data (`midas-api-specs-cay`).
 4. **Post-release** — Tag spec `v1.0.0` (`midas-api-specs-2d7`) as a frozen v1 baseline. Merge `v2` to `main` and bump the release version.
