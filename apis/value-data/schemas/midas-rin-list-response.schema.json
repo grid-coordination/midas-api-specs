@@ -2,30 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "midas-rin-list-response.schema.json",
   "title": "MIDAS RIN List Response (v2.0)",
-  "description": "Response from the ValueData endpoint when queried with SignalType alone. v2.0 (2026-06-22) replaces the v1.0 bare array of RinListEntry with a single-keyed object whose key reflects the requested SignalType: SignalType=1 → 'Rates', SignalType=2 → 'GHGEmissions', SignalType=3 → 'FlexAlerts', SignalType=0 → 'All'. Exactly one key is present.",
+  "description": "Response from the ValueData endpoint when queried with SignalType alone. v2.0 (2026-06-22) replaces the v1.0 bare array of RinListEntry with a single-keyed object. On the live v2.0 API the wrapper key is ALWAYS 'Rates', regardless of the requested SignalType (confirmed 2026-06-22 for SignalType 0/1/2/3 — the 'GHGEmissions', 'FlexAlerts', and 'All' keys implied by early design notes do not appear on the wire). Consumers should peel the single value without switching on the key name; the per-entry SignalType field identifies each RIN's signal type. SignalType=0 returns all active RINs (replacing the removed HistoricalList endpoint), still under the 'Rates' key.",
   "type": "object",
   "additionalProperties": false,
-  "minProperties": 1,
-  "maxProperties": 1,
+  "required": ["Rates"],
   "properties": {
     "Rates": {
       "type": "array",
-      "description": "Electricity rate RINs (SignalType=1).",
-      "items": { "$ref": "midas-rin-list-entry.schema.json" }
-    },
-    "GHGEmissions": {
-      "type": "array",
-      "description": "SGIP GHG (MOER) RINs (SignalType=2).",
-      "items": { "$ref": "midas-rin-list-entry.schema.json" }
-    },
-    "FlexAlerts": {
-      "type": "array",
-      "description": "California ISO Flex Alert (ALRT) RINs (SignalType=3).",
-      "items": { "$ref": "midas-rin-list-entry.schema.json" }
-    },
-    "All": {
-      "type": "array",
-      "description": "All active RINs across every signal type (SignalType=0). Replaces the removed HistoricalList endpoint.",
+      "description": "The RIN entries for the requested SignalType. Always the 'Rates' key on live v2.0, whatever the SignalType.",
       "items": { "$ref": "midas-rin-list-entry.schema.json" }
     }
   }

@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "midas-lookup-entry.schema.json",
   "title": "MIDAS Lookup Entry",
-  "description": "An entry from a MIDAS lookup/reference table.",
+  "description": "An entry (row) from a MIDAS lookup/reference table. All rows carry UploadCode and Description; some tables add extra columns (e.g. the Unit table adds PayloadDescriptor and UnitType), so additional properties are permitted.",
   "type": "object",
   "required": ["UploadCode", "Description"],
-  "additionalProperties": false,
+  "additionalProperties": true,
   "properties": {
     "UploadCode": {
       "type": "string",
@@ -14,6 +14,14 @@
     "Description": {
       "type": "string",
       "description": "Human-readable description of the code."
+    },
+    "PayloadDescriptor": {
+      "type": "string",
+      "description": "Optional machine token for the row (present on the Unit table, e.g. 'BACKUP_PRICE')."
+    },
+    "UnitType": {
+      "type": "string",
+      "description": "Optional unit category (present on the Unit table, e.g. 'KWH')."
     }
   }
 }

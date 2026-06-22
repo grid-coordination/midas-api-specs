@@ -22,7 +22,8 @@
     "LastUpdated": {
       "type": "string",
       "format": "date-time",
-      "description": "Timestamp of the last update to this RIN's data. Undocumented in upstream docs but present in live API responses."
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(\\.\\d+)?(Z|[+-]\\d{2}:?\\d{2})?$",
+      "description": "Timestamp of the last update to this RIN's data (UTC). On live v2.0 it carries a basic-format UTC offset (±HHMM, e.g. '+0000', no colon), confirmed 2026-06-22 — resolving the v1.0 bare/zoneless form. Note: '+0000' is ISO 8601 but not RFC 3339, so strict RFC-3339 parsers (e.g. Java ISO_OFFSET_DATE_TIME, which requires '+00:00') reject it; parse with a lenient formatter accepting '+0000', '+00:00', and 'Z'. The pattern here intentionally accepts the bare, basic-offset, extended-offset, and 'Z' forms."
     }
   }
 }

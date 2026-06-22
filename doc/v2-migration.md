@@ -36,16 +36,32 @@ This repo's `main` branch tracks the v1.0 spec; the **`v2` branch carries the br
 
 ### RIN list (`?SignalType=N`)
 
-v1.0 returned a bare array of `RinListEntry`. v2.0 returns a keyed object:
+v1.0 returned a bare array of `RinListEntry`. v2.0 returns a single-keyed object. **On the live v2.0 API the wrapper key is always `Rates`, regardless of the requested `SignalType`** (confirmed 2026-06-22 for SignalType 0/1/2/3 — the `GHGEmissions`, `FlexAlerts`, and `All` keys implied by early design notes do **not** appear on the wire; corrected via [issue #2](https://github.com/grid-coordination/midas-api-specs/issues/2)):
 
 ```json
-{ "Rates":         [ { "RateID": "...", ... }, ... ] }   // SignalType=1
-{ "GHGEmissions":  [ ... ] }                              // SignalType=2
-{ "FlexAlerts":    [ ... ] }                              // SignalType=3
-{ "All":           [ ... ] }                              // SignalType=0
+{ "Rates": [ { "RateID": "...", "SignalType": "...", ... }, ... ] }   // SignalType=0/1/2/3 all use "Rates"
 ```
 
-**Spec impact:** new schema `apis/value-data/schemas/midas-rin-list-response.schema.json`; `oneOf` branch in `apis/value-data/openapi.yaml` references it.
+Consumers should peel the single value without switching on the key name; the per-entry `SignalType` field identifies each RIN's signal type.
+
+**Spec impact:** new schema `apis/value-data/schemas/midas-rin-list-response.schema.json` (single `Rates` key, `required`); `oneOf` branch in `apis/value-data/openapi.yaml` references it.
+
+### Lookup table (`?LookupTable=N`)
+
+The same bare-array → keyed-object change applies to lookup tables (confirmed live 2026-06-22; [issue #3](https://github.com/grid-coordination/midas-api-specs/issues/3)). v1.0 returned a bare array of `LookupEntry`; v2.0 wraps it:
+
+```json
+{ "table_name": "Unit",
+  "data": [ { "UploadCode": "backup $/kWh", "Description": "...", "PayloadDescriptor": "BACKUP_PRICE", "UnitType": "KWH" }, ... ] }
+```
+
+Some tables (e.g. `Unit`) carry extra row columns beyond `UploadCode`/`Description`.
+
+**Spec impact:** new schema `apis/value-data/schemas/midas-lookup-table-response.schema.json`; `LookupTableResponse` component + `oneOf` branch in `openapi.yaml`; `midas-lookup-entry.schema.json` now allows additional row properties.
+
+### RateType wire value (rate-values query)
+
+The `RateInfo.RateType` wire value is **inconsistent across signal types** (confirmed live 2026-06-22; [issue #1](https://github.com/grid-coordination/midas-api-specs/issues/1)): electricity rates return the short `Ratetype` lookup **UploadCode** (`TOU`, `CPP`, `RTP`, …), while SGIP GHG returns the long Description `Greenhouse Gas emissions` and Flex Alert returns `Flex Alert`. (Earlier spec notes had this backwards — claiming GET always expands to the long Description.) Consumers should match on both forms.
 
 The per-entry `SignalType` field value also changes substantially:
 

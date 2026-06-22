@@ -45,7 +45,7 @@ verified empirically against the live API.
 |---|---|---|---|
 | `SystemTime_UTC` (ValueData response) | ISO 8601 with `Z` | UTC | unchanged from v1.0 |
 | `SignupCloseDate` (ValueData response) | ISO 8601 with `Z` | UTC | unchanged from v1.0 |
-| `LastUpdated` (ValueData RIN-list entries) | Bare ISO 8601, no zone suffix | TBD — verify after release | TBD |
+| `LastUpdated` (ValueData RIN-list entries) | ISO 8601 with **basic** UTC offset (`±HHMM`, no colon) | **UTC** | `"2021-07-14T14:31:55+0000"` |
 | `DateStart` / `DateEnd` (ValueInformation, **all** signal types) | Bare `YYYY-MM-DD` | **UTC** | first realtime datapoint of "today" carries the UTC date that maps to midnight Pacific |
 | `TimeStart` / `TimeEnd` (ValueInformation, **all** signal types) | Bare `HH:MM:SS` | **UTC** | first realtime datapoint is `"07:00:00"` (PDT) or `"08:00:00"` (PST), i.e. midnight Pacific converted to UTC |
 | `DateOfHoliday` (Holiday response) | — | — | **Standalone `/Holiday` endpoint retired in v2.0** — no Holiday response on the wire |
@@ -115,9 +115,11 @@ When parsing MIDAS responses:
 
 3. **Other bare fields** (`LastUpdated`; and `DateOfHoliday` in v1.0 only,
    as the standalone `/Holiday` endpoint is retired in v2.0): empirically PT
-   in v1.0. v2.0 behavior for `LastUpdated` was not addressed by the CEC
-   explicitly — to be re-verified after the release. Until verified,
-   continue treating it as `America/Los_Angeles` local.
+   in v1.0. **v2.0 resolves `LastUpdated` to UTC** — it now carries a
+   basic-format UTC offset (`+0000`, no colon), verified against the live
+   API 2026-06-22. Parse it with a lenient formatter (basic `+0000`,
+   extended `+00:00`, and `Z` all accepted): a strict RFC-3339 parser such
+   as Java `ISO_OFFSET_DATE_TIME` rejects the `+0000` basic form.
 
 4. **Display in another zone**: parse first, then `atZoneSameInstant` to
    the target zone. The instant is preserved; only the wall-clock
@@ -158,10 +160,11 @@ Pacific Time, and v1.0 forwarded their timestamps unchanged. The CEC has
 acknowledged this as an oversight and v2.0 normalizes everything to UTC
 by converting upstream-provider timestamps before delivery.
 
-The remaining `LastUpdated` PT-on-wire behavior (and `DateOfHoliday` in
-v1.0, before the standalone `/Holiday` endpoint was retired in v2.0) is
-likely a similar artifact (administrative timestamps written in PT and
-never tagged with a zone) and may or may not be addressed in v2.0 — TBD.
+The v1.0 `LastUpdated` PT-on-wire behavior (and `DateOfHoliday`, before the
+standalone `/Holiday` endpoint was retired in v2.0) was a similar artifact —
+administrative timestamps written in PT and never tagged with a zone. v2.0
+fixes `LastUpdated`: it is now emitted in UTC with an explicit basic-format
+offset (`+0000`), so the zoneless-PT guesswork no longer applies.
 
 ## References
 

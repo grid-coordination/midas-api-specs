@@ -1,0 +1,26 @@
+{
+  "table_name": "Unit",
+  "data": [
+    {
+      "UploadCode": "backup $/kWh",
+      "Description": "Dollars per kilowatt-hour for backup energy",
+      "PayloadDescriptor": "BACKUP_PRICE",
+      "UnitType": "KWH"
+    },
+    {
+      "UploadCode": "\u00a2/kWh",
+      "Description": "Cents per Kilowatt-hour"
+    },
+    {
+      "UploadCode": "Event",
+      "Description": "Boolean: 0=no, 1=yes",
+      "PayloadDescriptor": "ALERT_FLEX_ALERT"
+    },
+    {
+      "UploadCode": "export $/kWh",
+      "Description": "Dollars per kWh for asymmetric export to grid",
+      "PayloadDescriptor": "EXPORT_PRICE",
+      "UnitType": "KWH"
+    }
+  ]
+}

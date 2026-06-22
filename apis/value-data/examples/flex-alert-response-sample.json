@@ -2,7 +2,7 @@
   "RateID": "USCA-FLEX-ALRT-0000",
   "SystemTime_UTC": "2026-03-19T10:11:11.2455221Z",
   "RateName": "Flex Alert Status",
-  "RateType": null,
+  "RateType": "Flex Alert",
   "Sector": null,
   "API_Url": "https://wwwmobile.caiso.com/TodaysOutlookApi/api/EmergencyNotices/v2/ActiveFlexAlertEvents",
   "RatePlan_Url": null,

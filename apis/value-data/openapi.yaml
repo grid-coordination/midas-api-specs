@@ -26,7 +26,7 @@ info:
 
     This is a single REST endpoint with multiplexed behavior, not four separate
     resources. We document them as separate operations for clarity, but they all
-    hit the same URL. You're welcome, CEC.
+    hit the same URL.
   contact:
     name: Clark Communications Corporation
     url: https://github.com/grid-coordination/midas-api-specs
@@ -129,9 +129,9 @@ paths:
         '200':
           description: |
             Successful response. The shape depends on which parameters were supplied:
-            - SignalType → keyed object ({Rates|GHGEmissions|FlexAlerts|All: [RinListEntry]})
+            - SignalType → keyed object; on live v2.0 the wrapper key is always "Rates" (regardless of SignalType)
             - ID + QueryType → single RateInfo object (not an array, despite what the docs imply)
-            - LookupTable → array of LookupEntry
+            - LookupTable → keyed object { table_name, data: [LookupEntry] }
             - No params → XML schema as a JSON-encoded string
           content:
             application/json:
@@ -142,9 +142,7 @@ paths:
                   - title: Rate Values
                     $ref: '#/components/schemas/RateInfo'
                   - title: Lookup Table
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/LookupEntry'
+                    $ref: '#/components/schemas/LookupTableResponse'
                   - title: XML Schema
                     type: string
         '404':
@@ -181,26 +179,18 @@ components:
       type: object
       description: |
         v2.0 RIN-list response. The bare array of v1.0 is replaced by a
-        single-keyed object; the key reflects the requested SignalType
-        (1 → Rates, 2 → GHGEmissions, 3 → FlexAlerts, 0 → All). Exactly one
-        key is present.
-      minProperties: 1
-      maxProperties: 1
+        single-keyed object. On the live v2.0 API the wrapper key is **always
+        `Rates`**, regardless of the requested SignalType (confirmed
+        2026-06-22 for SignalType 0/1/2/3 — the `GHGEmissions`, `FlexAlerts`,
+        and `All` keys implied by early design notes do not appear on the
+        wire). Consumers should peel the single value without switching on the
+        key name. The per-entry `SignalType` field still identifies each RIN's
+        signal type.
+      required:
+        - Rates
       additionalProperties: false
       properties:
         Rates:
-          type: array
-          items:
-            $ref: '#/components/schemas/RinListEntry'
-        GHGEmissions:
-          type: array
-          items:
-            $ref: '#/components/schemas/RinListEntry'
-        FlexAlerts:
-          type: array
-          items:
-            $ref: '#/components/schemas/RinListEntry'
-        All:
           type: array
           items:
             $ref: '#/components/schemas/RinListEntry'
@@ -236,10 +226,16 @@ components:
           type: string
           format: date-time
           description: |
-            Timestamp of the last update to this RIN's data.
-            Undocumented in upstream docs but present in live API responses.
+            Timestamp of the last update to this RIN's data (UTC). On live
+            v2.0 this carries a **basic-format UTC offset** (`±HHMM`, e.g.
+            `+0000`) with no colon — confirmed 2026-06-22, resolving the v1.0
+            bare/zoneless form. Note: `+0000` is ISO 8601 but not RFC 3339, so
+            strict RFC-3339 parsers (e.g. Java `ISO_OFFSET_DATE_TIME`, which
+            requires `+00:00`) reject it; parse with a lenient formatter that
+            accepts `+0000`, `+00:00`, and `Z`.
           examples:
-            - "2023-06-07T15:57:48.023Z"
+            - "2021-07-14T14:31:55+0000"
+            - "2026-05-22T15:23:43+0000"
 
     RateInfo:
       type: object
@@ -273,18 +269,23 @@ components:
             - string
             - "null"
           description: |
-            Rate classification. The upload codes (TOU, CPP, RTP, etc.) are
-            expanded to human-readable strings in GET responses. Null for
-            some signal types (e.g. Flex Alert).
+            Rate classification. The wire value is **inconsistent across signal
+            types** (confirmed against live v2.0, 2026-06-22):
 
-            Note: Uploads use short codes (e.g. "TOU") but GET responses
-            return long descriptions (e.g. "Time of use"). This inconsistency
-            is in the upstream API, not our spec.
+            - Electricity rates return the short `Ratetype` lookup UploadCode —
+              e.g. `TOU`, `CPP`, `RTP`, `VPP`, `DSR`, `V-D`, `C-D`, `R-D`,
+              `T-D` (not the long Description).
+            - SGIP GHG returns the long Description `Greenhouse Gas emissions`.
+            - Flex Alert returns the long Description `Flex Alert`.
+
+            So electricity rates expose the short code while GHG/Flex expose the
+            long Description. Consumers should match on both forms. May be null
+            for some entries.
           examples:
-            - Time of use
-            - Critical Peak Pricing
-            - Real Time Pricing
+            - TOU
+            - CPP
             - Greenhouse Gas emissions
+            - Flex Alert
         Sector:
           type:
             - string
@@ -438,12 +439,39 @@ components:
             - "export $/kWh"
             - "g/kWh CO2"
 
+    LookupTableResponse:
+      type: object
+      description: |
+        v2.0 lookup-table response. Like the RIN list, the bare array of v1.0
+        is replaced by a keyed object — the table name plus a `data` array of
+        rows (confirmed against live v2.0, 2026-06-22).
+      required:
+        - table_name
+        - data
+      additionalProperties: false
+      properties:
+        table_name:
+          type: string
+          description: The name of the lookup table.
+          examples:
+            - Unit
+            - Ratetype
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LookupEntry'
+
     LookupEntry:
       type: object
-      description: An entry from a MIDAS lookup/reference table.
+      description: |
+        An entry from a MIDAS lookup/reference table. All rows carry
+        `UploadCode` and `Description`; some tables add extra columns (e.g. the
+        `Unit` table adds `PayloadDescriptor` and `UnitType`), so additional
+        properties are permitted.
       required:
         - UploadCode
         - Description
+      additionalProperties: true
       properties:
         UploadCode:
           type: string
@@ -451,9 +479,22 @@ components:
           examples:
             - PG
             - MC
+            - "backup $/kWh"
         Description:
           type: string
           description: Human-readable description of the code.
           examples:
             - Pacific Gas and Electric
             - Marin Clean Energy
+        PayloadDescriptor:
+          type: string
+          description: |
+            Optional machine token for the row (present on the `Unit` table).
+          examples:
+            - BACKUP_PRICE
+        UnitType:
+          type: string
+          description: |
+            Optional unit category (present on the `Unit` table).
+          examples:
+            - KWH

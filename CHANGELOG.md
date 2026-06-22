@@ -37,6 +37,15 @@ Staged on the `v2` branch ahead of release so downstream consumers can build aga
 - **Breaking — the `HistoricalList` operation.** Use `GET /valuedata?SignalType=0` for the full active RIN list.
 - The `?LookupTable=Holiday` and `?LookupTable=TimeZone` lookup tables (return `404` in v2.0).
 
+### Fixed
+
+Corrections from live v2.0 smoke-testing (`clj-midas`, 2026-06-22; GitHub issues #1–#4):
+
+- **RIN-list wrapper key is always `Rates`** (issue #2), regardless of `SignalType` — the `GHGEmissions`/`FlexAlerts`/`All` keys do not appear on the wire. `RinListResponse` (OpenAPI + `midas-rin-list-response.schema.json`) now models a single required `Rates` key.
+- **LookupTable response is a keyed object** `{ table_name, data: [LookupEntry] }`, not a bare array (issue #3). Added `LookupTableResponse` (OpenAPI) and `midas-lookup-table-response.schema.json`; `LookupEntry` now permits extra row columns (`PayloadDescriptor`, `UnitType` on the `Unit` table).
+- **`RateType` wire value is inconsistent across signal types** (issue #1): electricity rates return the short `Ratetype` UploadCode (`TOU`, `CPP`, …) while GHG/Flex return the long Description (`Greenhouse Gas emissions`, `Flex Alert`). Earlier notes had this backwards. Corrected `RateInfo.RateType` docs and the `tou-rate`/`flex-alert` examples.
+- **`LastUpdated` is UTC with a basic-format offset** `±HHMM` (e.g. `+0000`), resolving the documented v1.0 bare/zoneless-PT TBD (issue #4). Updated `doc/datetime-and-timezone.md`, `midas-rin-list-entry.schema.json`, and `rin-list-sample.json`; noted the RFC-3339 parsing caveat.
+
 ## [1.0.0] — 2026-03-19
 
 Initial machine-readable spec set for the MIDAS v1.0 API — OpenAPI 3.1 and JSON Schema (draft 2020-12) covering endpoints the CEC documents only in prose.

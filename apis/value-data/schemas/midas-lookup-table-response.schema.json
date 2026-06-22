@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "midas-lookup-table-response.schema.json",
+  "title": "MIDAS Lookup Table Response (v2.0)",
+  "description": "Response from the ValueData endpoint when queried with LookupTable alone. v2.0 (2026-06-22) replaces the v1.0 bare array of LookupEntry with a keyed object — the table name plus a 'data' array of rows (confirmed against live v2.0, 2026-06-22). Mirrors the RIN-list bare-array-to-keyed-object change.",
+  "type": "object",
+  "required": ["table_name", "data"],
+  "additionalProperties": false,
+  "properties": {
+    "table_name": {
+      "type": "string",
+      "description": "The name of the lookup table (e.g. 'Unit', 'Ratetype', 'Distribution', 'Energy')."
+    },
+    "data": {
+      "type": "array",
+      "description": "The rows of the lookup table.",
+      "items": { "$ref": "midas-lookup-entry.schema.json" }
+    }
+  }
+}

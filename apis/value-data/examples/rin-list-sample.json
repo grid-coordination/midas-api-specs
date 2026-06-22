@@ -4,19 +4,19 @@
       "RateID": "USCA-BNBN-EVT2-0000",
       "SignalType": "Electricity Rates",
       "Description": "Rate Data for Distributor: Banning, Energy Company: Banning",
-      "LastUpdated": "2021-07-14T14:31:55.653"
+      "LastUpdated": "2021-07-14T14:31:55+0000"
     },
     {
       "RateID": "USCA-LALA-TTOU-0000",
       "SignalType": "Electricity Rates",
       "Description": "Rate Data for Distributor: LADWP, Energy Company: LADWP",
-      "LastUpdated": "2023-06-07T15:57:48.023"
+      "LastUpdated": "2023-06-07T15:57:48+0000"
     },
     {
-      "RateID": "USCA-HPHP-TEST-0000",
-      "SignalType": "Electricity Rates",
-      "Description": "Rate Data for Distributor: HP-Flex Research, Energy Company: HP-Flex Research",
-      "LastUpdated": "2022-05-26T21:17:52.103"
+      "RateID": "USCA-SGIP-MOER-IID",
+      "SignalType": "Greenhouse Gas Emissions",
+      "Description": "SGIP_IID Realtime GHG Emissions - Greenhouse Gas emissions",
+      "LastUpdated": "2026-05-22T15:23:43+0000"
     }
   ]
 }
