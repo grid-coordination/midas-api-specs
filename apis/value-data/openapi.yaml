@@ -297,6 +297,27 @@ components:
           description: Name of the rate as provided by the uploading party.
           examples:
             - CEC TEST24HTOU
+        SignalType:
+          type:
+            - string
+            - "null"
+          description: |
+            Human-readable signal type, present in live v2.0 rate-values
+            responses (confirmed 2026-06-22). Matches the per-entry SignalType
+            in the RIN list.
+          examples:
+            - Electricity Rates
+            - Greenhouse Gas Emissions
+            - California Independent System Operator Flex Alert
+        Description:
+          type:
+            - string
+            - "null"
+          description: |
+            Human-readable description of the rate, present in live v2.0
+            rate-values responses.
+          examples:
+            - "SGIP_CAISO_PGE Realtime GHG Emissions - Greenhouse Gas emissions"
         RateType:
           type:
             - string
@@ -324,16 +345,24 @@ components:
             - string
             - "null"
           description: |
-            Customer sector or null. GET responses return long descriptions
-            (e.g. "All sectors") rather than upload codes (e.g. "All").
+            Customer sector or null. On live v2.0 the test electricity RIN
+            returned the short `Sector` UploadCode (`All`), not the long
+            Description (`All sectors`) — consistent with the `RateType`
+            short-code behavior (broader confirmation pending utility-data
+            migration). Match on both forms.
           examples:
-            - All sectors
-            - Residential
+            - All
+            - Res
         EndUse:
           type:
             - string
             - "null"
-          description: End use category (All, EV, Solar, Battery, Other) or null.
+          description: |
+            End use category or null. Live v2.0 returned the short UploadCode
+            (`All`); known codes: `All`, `EV`, `Solar`, `Battery`, `Other`.
+          examples:
+            - All
+            - EV
         API_Url:
           type:
             - string
@@ -410,25 +439,35 @@ components:
             - "2023-03-01"
         DayStart:
           type:
+            - integer
             - string
             - "null"
+          minimum: 1
+          maximum: 8
           description: |
-            Day type of interval start in local time, as a human-readable
-            string, or null (observed in HistoricalData responses).
+            Day type of interval start in local time, or null (observed in
+            HistoricalData responses).
 
             Upload format uses integers: 1=Monday through 7=Sunday, 8=Holiday.
-            GET response format uses strings: "Monday" through "Sunday", "Holiday".
+            On live v2.0 the SGIP GHG (MOER) and Flex Alert (ALRT) signals
+            return the **integer** form (e.g. `1`) — confirmed 2026-06-22. v1.0
+            returned the human-readable string ("Monday" … "Holiday"); the
+            electricity-rate wire form in v2.0 is unconfirmed pending
+            utility-data migration. Consumers should accept both.
           examples:
+            - 1
             - Monday
-            - Tuesday
             - Holiday
         DayEnd:
           type:
+            - integer
             - string
             - "null"
-          description: Day type of interval end in local time. Same encoding as DayStart, or null.
+          minimum: 1
+          maximum: 8
+          description: Day type of interval end in local time. Same encoding as DayStart (integer on live v2.0 MOER/ALRT, string in v1.0), or null.
           examples:
-            - Monday
+            - 1
             - Friday
         TimeStart:
           type: string

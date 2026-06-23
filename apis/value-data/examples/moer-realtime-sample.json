@@ -1,0 +1,83 @@
+{
+  "RateID": "USCA-SGIP-MOER-PGE",
+  "SystemTime_UTC": "2026-06-23T03:34:50.858999Z",
+  "RateName": "SGIP_CAISO_PGE Realtime GHG Emissions",
+  "RateType": "Greenhouse Gas emissions",
+  "Sector": null,
+  "API_Url": "https://sgipsignal.com/",
+  "RatePlan_Url": null,
+  "EndUse": null,
+  "AltRateName1": null,
+  "AltRateName2": null,
+  "SignupCloseDate": null,
+  "SignalType": "Greenhouse Gas Emissions",
+  "Description": "SGIP_CAISO_PGE Realtime GHG Emissions - Greenhouse Gas emissions",
+  "ValueInformation": [
+    {
+      "ValueName": "Realtime SGIP GHG Emission",
+      "DateStart": "2026-06-22",
+      "DateEnd": "2026-06-22",
+      "DayStart": 1,
+      "DayEnd": 1,
+      "TimeStart": "07:00:00",
+      "TimeEnd": "07:04:59",
+      "Unit": "g/kWh CO2",
+      "Value": 643.1940171576185
+    },
+    {
+      "ValueName": "Realtime SGIP GHG Emission",
+      "DateStart": "2026-06-22",
+      "DateEnd": "2026-06-22",
+      "DayStart": 1,
+      "DayEnd": 1,
+      "TimeStart": "07:05:00",
+      "TimeEnd": "07:09:59",
+      "Unit": "g/kWh CO2",
+      "Value": 643.1940171576185
+    },
+    {
+      "ValueName": "Realtime SGIP GHG Emission",
+      "DateStart": "2026-06-22",
+      "DateEnd": "2026-06-22",
+      "DayStart": 1,
+      "DayEnd": 1,
+      "TimeStart": "07:10:00",
+      "TimeEnd": "07:14:59",
+      "Unit": "g/kWh CO2",
+      "Value": 643.1940171576185
+    },
+    {
+      "ValueName": "Realtime SGIP GHG Emission",
+      "DateStart": "2026-06-22",
+      "DateEnd": "2026-06-22",
+      "DayStart": 1,
+      "DayEnd": 1,
+      "TimeStart": "07:15:00",
+      "TimeEnd": "07:19:59",
+      "Unit": "g/kWh CO2",
+      "Value": 633.5256452505812
+    },
+    {
+      "ValueName": "Realtime SGIP GHG Emission",
+      "DateStart": "2026-06-22",
+      "DateEnd": "2026-06-22",
+      "DayStart": 1,
+      "DayEnd": 1,
+      "TimeStart": "07:20:00",
+      "TimeEnd": "07:24:59",
+      "Unit": "g/kWh CO2",
+      "Value": 633.5256452505812
+    },
+    {
+      "ValueName": "Realtime SGIP GHG Emission",
+      "DateStart": "2026-06-22",
+      "DateEnd": "2026-06-22",
+      "DayStart": 1,
+      "DayEnd": 1,
+      "TimeStart": "07:25:00",
+      "TimeEnd": "07:29:59",
+      "Unit": "g/kWh CO2",
+      "Value": 633.5256452505812
+    }
+  ]
+}

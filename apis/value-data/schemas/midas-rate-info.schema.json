@@ -20,6 +20,14 @@
       "type": ["string", "null"],
       "description": "Name of the rate as provided by the uploading party."
     },
+    "SignalType": {
+      "type": ["string", "null"],
+      "description": "Human-readable signal type, present in live v2.0 rate-values responses (confirmed 2026-06-22): 'Electricity Rates', 'Greenhouse Gas Emissions', or 'California Independent System Operator Flex Alert'. Matches the per-entry SignalType in the RIN list."
+    },
+    "Description": {
+      "type": ["string", "null"],
+      "description": "Human-readable description of the rate, present in live v2.0 rate-values responses (e.g. 'SGIP_CAISO_PGE Realtime GHG Emissions - Greenhouse Gas emissions')."
+    },
     "RateType": {
       "type": ["string", "null"],
       "description": "Rate classification. Inconsistent wire format across signal types (confirmed live v2.0, 2026-06-22): electricity rates return the short Ratetype lookup UploadCode (TOU, CPP, RTP, VPP, DSR, V-D, C-D, R-D, T-D); SGIP GHG returns the long Description 'Greenhouse Gas emissions'; Flex Alert returns the long Description 'Flex Alert'. Match on both the UploadCode and the Description. May be null for some entries."

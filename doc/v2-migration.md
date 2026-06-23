@@ -62,7 +62,12 @@ Some tables (e.g. `Unit`) carry extra row columns beyond `UploadCode`/`Descripti
 
 ### RateType wire value (rate-values query)
 
-The `RateInfo.RateType` wire value is **inconsistent across signal types** (confirmed live 2026-06-22; [issue #1](https://github.com/grid-coordination/midas-api-specs/issues/1)): electricity rates return the short `Ratetype` lookup **UploadCode** (`TOU`, `CPP`, `RTP`, …), while SGIP GHG returns the long Description `Greenhouse Gas emissions` and Flex Alert returns `Flex Alert`. (Earlier spec notes had this backwards — claiming GET always expands to the long Description.) Consumers should match on both forms.
+The `RateInfo.RateType` wire value is **inconsistent across signal types** (confirmed live 2026-06-22; [issue #1](https://github.com/grid-coordination/midas-api-specs/issues/1)): electricity rates return the short `Ratetype` lookup **UploadCode** (`TOU`, `CPP`, `RTP`, …), while SGIP GHG returns the long Description `Greenhouse Gas emissions` and Flex Alert returns `Flex Alert`. (Earlier spec notes had this backwards — claiming GET always expands to the long Description.) Consumers should match on both forms. `Sector` and `EndUse` show the same short-code behavior on the live test RIN (`All`, not `All sectors`).
+
+Two more rate-values shape findings from regenerating examples against the live API ([issue #8](https://github.com/grid-coordination/midas-api-specs/issues/8)):
+
+- **`DayStart`/`DayEnd` are integers** (`1`=Monday … `8`=Holiday — the upload-format code) on live MOER and ALRT responses; v1.0 returned human-readable strings (`"Monday"`). The schema now accepts integer, string, or null. The electricity-rate wire form is unconfirmed (utility rate data was not migrated as of the release week, so no live electricity-rate intervals were available).
+- **`RateInfo` carries top-level `SignalType` and `Description`** fields on live rate-values responses (not previously modeled); both added to the schema.
 
 The per-entry `SignalType` field value also changes substantially:
 

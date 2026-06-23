@@ -23,17 +23,19 @@
     },
     "DayStart": {
       "oneOf": [
+        { "$ref": "midas-enums.schema.json#/$defs/dayTypeInteger" },
         { "$ref": "midas-enums.schema.json#/$defs/dayTypeString" },
         { "type": "null" }
       ],
-      "description": "Day type of interval start in local time (human-readable string in GET responses), or null (observed in HistoricalData)."
+      "description": "Day type of interval start in local time. On live v2.0 the SGIP GHG (MOER) and Flex Alert (ALRT) signals return an INTEGER (1=Monday … 7=Sunday, 8=Holiday — the upload-format code), confirmed 2026-06-22. v1.0 returned a human-readable string ('Monday'); the electricity-rate wire form in v2.0 is unconfirmed pending utility-data migration. May be null (observed in HistoricalData)."
     },
     "DayEnd": {
       "oneOf": [
+        { "$ref": "midas-enums.schema.json#/$defs/dayTypeInteger" },
         { "$ref": "midas-enums.schema.json#/$defs/dayTypeString" },
         { "type": "null" }
       ],
-      "description": "Day type of interval end in local time (human-readable string in GET responses), or null (observed in HistoricalData)."
+      "description": "Day type of interval end in local time. Same encoding as DayStart — integer on live v2.0 MOER/ALRT, string in v1.0, or null."
     },
     "TimeStart": {
       "type": "string",

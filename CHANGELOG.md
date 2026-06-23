@@ -53,6 +53,17 @@ Error-semantics corrections from `python-midas` 1.0.0 live smoke-testing (2026-0
 - **Standalone `/Holiday` returns `401`, not `404`/removed** (issue #7): the route persists at `/api/Holiday` but is auth-gated (`{"detail": "Not authenticated"}` for anonymous callers) — still gone from the public read surface.
 - Added an `Error` schema and `400`/`404` responses to `apis/value-data/openapi.yaml`.
 
+Rate-values response-shape corrections from regenerating examples against the live API (2026-06-22; GitHub issue #8) — silently tolerated by the lenient clients, so not surfaced by their smoke tests:
+
+- **`DayStart`/`DayEnd` are integers on live v2.0** (`1`=Monday … `8`=Holiday — the upload-format code) for the SGIP GHG (MOER) and Flex Alert (ALRT) signals; v1.0 returned human-readable strings. `midas-value-data.schema.json` and the OpenAPI now accept integer, string, or null (electricity-rate form unconfirmed pending utility-data migration).
+- **`RateInfo` carries top-level `SignalType` and `Description`** on live rate-values responses — added to `midas-rate-info.schema.json` and the OpenAPI.
+- **`Sector`/`EndUse` returned the short UploadCode** (`All`) on the live test RIN, not the long Description (`All sectors`) — same pattern as `RateType`; docs softened to match on both.
+
+### Added (examples)
+
+- `apis/value-data/examples/moer-realtime-sample.json` — real live SGIP GHG (MOER) realtime capture (`USCA-SGIP-MOER-PGE`, `g/kWh CO2`, integer day-types).
+- Regenerated `flex-alert-response-sample.json` from the live `USCA-FLEX-ALRT-0000` response. The `tou-rate` example carries live test-RIN metadata with illustrative intervals — utility rate data was not yet migrated as of the release week, so no live electricity-rate interval capture was possible (see `cay` follow-up).
+
 ## [1.0.0] — 2026-03-19
 
 Initial machine-readable spec set for the MIDAS v1.0 API — OpenAPI 3.1 and JSON Schema (draft 2020-12) covering endpoints the CEC documents only in prose.
