@@ -33,7 +33,7 @@ Released at the CEC v2.0 cutover (2026-06-22) and merged to `main`. The breaking
 
 ### Removed
 
-- **Breaking — the standalone `GET /Holiday` endpoint is retired.** The CEC removed it from its published OpenAPI, and it is removed from this spec set (`apis/holiday/`). (The CEC has not fully torn down the route yet — an unauthenticated `GET /api/Holiday` currently returns `401` rather than `404` — but that is incomplete decommissioning, not an ongoing endpoint; treat it as gone. GitHub issue #7.) The `Holiday` day-type value in rate schedules (`8=Holiday`) is a separate concept and is unaffected.
+- **Breaking — the standalone `GET /Holiday` endpoint** is removed in v2.0 (it existed in v1.0; `apis/holiday/` is dropped from this spec set). The `Holiday` day-type value in rate schedules (`8=Holiday`) is a separate concept and is unaffected.
 - **Breaking — the `HistoricalList` operation.** Use `GET /valuedata?SignalType=0` for the full active RIN list.
 - The `?LookupTable=Holiday` and `?LookupTable=TimeZone` lookup tables. These return `HTTP 400 {"detail": "Unsupported lookup table: <name>"}` in v2.0 (not `404` — live smoke-test 2026-06-22, GitHub issue #6).
 
@@ -46,11 +46,10 @@ Corrections from live v2.0 smoke-testing (`clj-midas`, 2026-06-22; GitHub issues
 - **`RateType` wire value is inconsistent across signal types** (issue #1): electricity rates return the short `Ratetype` UploadCode (`TOU`, `CPP`, …) while GHG/Flex return the long Description (`Greenhouse Gas emissions`, `Flex Alert`). Earlier notes had this backwards. Corrected `RateInfo.RateType` docs and the `tou-rate`/`flex-alert` examples.
 - **`LastUpdated` is UTC with a basic-format offset** `±HHMM` (e.g. `+0000`), resolving the documented v1.0 bare/zoneless-PT TBD (issue #4). Updated `doc/datetime-and-timezone.md`, `midas-rin-list-entry.schema.json`, and `rin-list-sample.json`; noted the RFC-3339 parsing caveat.
 
-Error-semantics corrections from `python-midas` 1.0.0 live smoke-testing (2026-06-22; GitHub issues #5–#7) — the CEC announcement's status codes did not match the live API:
+Error-semantics corrections from `python-midas` 1.0.0 live smoke-testing (2026-06-22; GitHub issues #5–#6) — the CEC announcement's status codes did not match the live API:
 
 - **Retired RINs return `404`, not `410 Gone`** (issue #5): `{"detail": "RIN not found: <RIN>"}`.
 - **Retired lookup tables return `400`, not `404`** (issue #6): `{"detail": "Unsupported lookup table: <name>"}`.
-- **Standalone `/Holiday` errors with `401`, not `404`** (issue #7): the CEC has not fully torn down the route, so an unauthenticated `GET /api/Holiday` returns `401 {"detail": "Not authenticated"}` rather than `404` — incomplete decommissioning, not an ongoing endpoint. Retired regardless; `apis/holiday/` stays removed.
 - Added an `Error` schema and `400`/`404` responses to `apis/value-data/openapi.yaml`.
 
 Rate-values response-shape corrections from regenerating examples against the live API (2026-06-22; GitHub issue #8) — silently tolerated by the lenient clients, so not surfaced by their smoke tests:
