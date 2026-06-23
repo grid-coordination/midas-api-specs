@@ -4,9 +4,9 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html). The spec version tracks the MIDAS API major version it documents: `1.0.0` covers MIDAS v1.0; `2.0.0` covers MIDAS v2.0 (CEC release 2026-06-22). These are unofficial, best-effort specifications — see the [README disclaimer](README.md#disclaimer).
 
-## [2.0.0] — Unreleased (CEC release target 2026-06-22)
+## [2.0.0] — 2026-06-22
 
-Staged on the `v2` branch ahead of release so downstream consumers can build against it; pending a live smoke-test against the production v2.0 API before merge to `main`. See [doc/v2-migration.md](doc/v2-migration.md) for the full v1.0 → v2.0 delta and [doc/cec-v2-change-guide.md](doc/cec-v2-change-guide.md) for the CEC's official consumer change guide.
+Released at the CEC v2.0 cutover (2026-06-22) and merged to `main`. The breaking changes below were verified against the production v2.0 API during `clj-midas` and `python-midas` 1.0.0 smoke-testing (see the **Fixed** entries for the live-test corrections). See [doc/v2-migration.md](doc/v2-migration.md) for the full v1.0 → v2.0 delta and [doc/cec-v2-change-guide.md](doc/cec-v2-change-guide.md) for the CEC's official consumer change guide.
 
 ### Changed
 
@@ -64,5 +64,5 @@ Initial machine-readable spec set for the MIDAS v1.0 API — OpenAPI 3.1 and JSO
 - Sample response examples for the ValueData endpoint.
 - Documentation: `doc/rin-structure.md` (RIN format), `doc/flex-alerts.md` (Flex Alert signals and history), and `doc/datetime-and-timezone.md` (empirical UTC-vs-PT wire conventions).
 
-[2.0.0]: https://github.com/grid-coordination/midas-api-specs/tree/v2
+[2.0.0]: https://github.com/grid-coordination/midas-api-specs/releases/tag/v2.0.0
 [1.0.0]: https://github.com/grid-coordination/midas-api-specs/releases/tag/v1.0.0
