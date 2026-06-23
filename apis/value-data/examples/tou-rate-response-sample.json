@@ -2,7 +2,7 @@
   "RateID": "USCA-TSTS-TTOU-TEST",
   "SystemTime_UTC": "2026-03-19T10:03:46.379Z",
   "RateName": "CEC TEST24HTOU",
-  "RateType": "Time of use",
+  "RateType": "TOU",
   "Sector": "All sectors",
   "EndUse": "All",
   "API_Url": "None",
@@ -19,7 +19,7 @@
       "DayEnd": "Monday",
       "TimeStart": "07:00:00",
       "TimeEnd": "07:59:59",
-      "value": 0.1006,
+      "Value": 0.1006,
       "Unit": "$/kWh"
     },
     {
@@ -30,7 +30,7 @@
       "DayEnd": "Monday",
       "TimeStart": "08:00:00",
       "TimeEnd": "08:59:59",
-      "value": 0.1006,
+      "Value": 0.1006,
       "Unit": "$/kWh"
     },
     {
@@ -41,7 +41,7 @@
       "DayEnd": "Tuesday",
       "TimeStart": "01:00:00",
       "TimeEnd": "01:59:59",
-      "value": 0.1388,
+      "Value": 0.1388,
       "Unit": "$/kWh"
     },
     {
@@ -52,7 +52,7 @@
       "DayEnd": "Wednesday",
       "TimeStart": "08:00:00",
       "TimeEnd": "08:59:59",
-      "value": 0.1006,
+      "Value": 0.1006,
       "Unit": "$/kWh"
     }
   ]

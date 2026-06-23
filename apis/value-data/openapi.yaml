@@ -1,10 +1,17 @@
 openapi: 3.1.0
 info:
   title: MIDAS ValueData API
-  version: 0.1.0
+  version: 2.0.0
   description: |
     Unofficial OpenAPI specification for the California Energy Commission's
     [MIDAS](https://midasapi.energy.ca.gov/) ValueData endpoint.
+
+    **This is the MIDAS v2.0 spec (CEC release 2026-06-22).** GET endpoints are
+    unauthenticated, the RIN-list response is a keyed object (was a bare array
+    in v1.0), the value field is `Value` (was lowercase `value`), SGIP GHG is
+    reported in `g/kWh CO2` (was `kg/kWh CO2`), and all wire datetimes are UTC.
+    See [doc/v2-migration.md](https://github.com/grid-coordination/midas-api-specs/blob/v2/doc/v2-migration.md)
+    for the full v1.0 → v2.0 delta.
 
     Derived from the [MIDAS documentation](https://github.com/california-energy-commission/MIDAS)
     on a best-effort basis. May be incomplete, inaccurate, or out of date.
@@ -12,14 +19,14 @@ info:
     The ValueData endpoint is overloaded — it serves four distinct operations
     depending on which query parameters are supplied:
 
-    1. **RIN List** — `?SignalType={0-3}` — list available Rate Identification Numbers
+    1. **RIN List** — `?SignalType={0-3}` — list available Rate Identification Numbers (keyed object in v2.0)
     2. **Rate Values** — `?ID={RIN}&QueryType={alldata|realtime}` — retrieve rate/price data
     3. **Lookup Table** — `?LookupTable={name}` — retrieve reference data (codes & descriptions)
     4. **XML Schema** — no parameters — retrieve the upload XML schema
 
     This is a single REST endpoint with multiplexed behavior, not four separate
     resources. We document them as separate operations for clarity, but they all
-    hit the same URL. You're welcome, CEC.
+    hit the same URL.
   contact:
     name: Clark Communications Corporation
     url: https://github.com/grid-coordination/midas-api-specs
@@ -31,9 +38,6 @@ servers:
   - url: https://midasapi.energy.ca.gov/api
     description: MIDAS Production
 
-security:
-  - bearerAuth: []
-
 paths:
   /ValueData:
     get:
@@ -43,11 +47,19 @@ paths:
         query parameters are provided. Supply exactly one of the following
         parameter combinations:
 
-        - `SignalType` alone → RIN list
+        - `SignalType` alone → RIN list (keyed object)
         - `ID` + `QueryType` → rate/price values
         - `LookupTable` alone → reference lookup table
         - No parameters → XML upload schema
+
+        **Authentication:** In v2.0 all GET calls are unauthenticated — no bearer
+        token is required. A token is still accepted (e.g. for lookup-table
+        calls) but never required for public GET data. The `bearerAuth` scheme
+        remains defined for upload operations documented elsewhere.
       operationId: getValueData
+      security:
+        - {}
+        - bearerAuth: []
       parameters:
         - name: SignalType
           in: query
@@ -65,15 +77,29 @@ paths:
           required: false
           schema:
             type: string
-            pattern: '^[A-Z]{2}[A-Z]{2}-[A-Z0-9]{2}[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{4,10}$'
+            pattern: '^[A-Z]{2}[A-Z]{2}-[A-Z0-9]{2}[A-Z0-9]{2}-[A-Z0-9]{4}-[A-Z0-9]{2,10}$'
             examples:
               - USCA-TSTS-TTOU-TEST
               - USCA-PGPG-ETOU-0000
+              - USCA-SGIP-MOER-PGE
+              - USCA-FLEX-ALRT-0000
         - name: QueryType
           in: query
           description: |
             The type of data to return for the specified RIN.
             Must be accompanied by ID.
+
+            - `realtime` — v2.0 returns a fixed **72-hour window** starting at
+              midnight Pacific on the request date (regardless of signal type).
+              For SGIP GHG/MOER this is a continuous 5-minute series blending
+              past observed data, current readings, and WattTime forecast.
+            - `alldata` — v2.0 returns a fixed **90-day window** ending 23:59:59
+              Pacific on Day+2. For ranges beyond 90 days use the HistoricalData
+              endpoint (max 6 months per call).
+
+            Window boundaries are PT-aligned but expressed as UTC on the wire
+            (midnight Pacific = `07:00:00` UTC during PDT, `08:00:00` UTC during
+            PST). See doc/datetime-and-timezone.md.
           required: false
           schema:
             type: string
@@ -103,28 +129,44 @@ paths:
         '200':
           description: |
             Successful response. The shape depends on which parameters were supplied:
-            - SignalType → array of RinListEntry
+            - SignalType → keyed object; on live v2.0 the wrapper key is always "Rates" (regardless of SignalType)
             - ID + QueryType → single RateInfo object (not an array, despite what the docs imply)
-            - LookupTable → array of LookupEntry
+            - LookupTable → keyed object { table_name, data: [LookupEntry] }
             - No params → XML schema as a JSON-encoded string
           content:
             application/json:
               schema:
                 oneOf:
                   - title: RIN List
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/RinListEntry'
+                    $ref: '#/components/schemas/RinListResponse'
                   - title: Rate Values
                     $ref: '#/components/schemas/RateInfo'
                   - title: Lookup Table
-                    type: array
-                    items:
-                      $ref: '#/components/schemas/LookupEntry'
+                    $ref: '#/components/schemas/LookupTableResponse'
                   - title: XML Schema
                     type: string
-        '401':
-          description: Unauthorized — missing or expired bearer token
+        '400':
+          description: |
+            Bad request. In v2.0 an unknown or retired lookup table returns 400
+            (not 404) — `?LookupTable=Holiday` and `?LookupTable=TimeZone` (both
+            retired) return `{"detail": "Unsupported lookup table: <name>"}`.
+            (Confirmed live 2026-06-22; GitHub issue #6.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: |
+            Not found. An unknown or **retired** RIN returns
+            `{"detail": "RIN not found: <RIN>"}`. A retired legacy RIN (e.g.
+            `USCA-SGIP-SGRT-PGE`, `USCA-FLEX-FXRT-0000`) is indistinguishable
+            on the wire from one that never existed — the CEC announcement said
+            `410 Gone`, but the live API returns 404. (Confirmed live
+            2026-06-22; GitHub issue #5.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   securitySchemes:
@@ -136,6 +178,22 @@ components:
         HTTP Basic authentication, then pass it as `Authorization: Bearer {token}`.
 
   schemas:
+    Error:
+      type: object
+      description: |
+        Error response body. MIDAS v2.0 (FastAPI) returns a single `detail`
+        string for 4xx responses.
+      required:
+        - detail
+      additionalProperties: false
+      properties:
+        detail:
+          type: string
+          examples:
+            - "RIN not found: USCA-SGIP-SGRT-PGE"
+            - "Unsupported lookup table: Holiday"
+            - "Not authenticated"
+
     SignalTypeParam:
       type: integer
       enum:
@@ -149,6 +207,26 @@ components:
         - 1 = Electricity rates
         - 2 = Greenhouse gas emissions
         - 3 = California ISO Flex Alert
+
+    RinListResponse:
+      type: object
+      description: |
+        v2.0 RIN-list response. The bare array of v1.0 is replaced by a
+        single-keyed object. On the live v2.0 API the wrapper key is **always
+        `Rates`**, regardless of the requested SignalType (confirmed
+        2026-06-22 for SignalType 0/1/2/3 — the `GHGEmissions`, `FlexAlerts`,
+        and `All` keys implied by early design notes do not appear on the
+        wire). Consumers should peel the single value without switching on the
+        key name. The per-entry `SignalType` field still identifies each RIN's
+        signal type.
+      required:
+        - Rates
+      additionalProperties: false
+      properties:
+        Rates:
+          type: array
+          items:
+            $ref: '#/components/schemas/RinListEntry'
 
     RinListEntry:
       type: object
@@ -164,15 +242,14 @@ components:
           examples:
             - USCA-TSTS-TTOU-TEST
         SignalType:
-          type:
-            - string
-            - 'null'
-          description: Human-readable signal type. Null for GHG and Flex Alert entries in live API responses.
+          type: string
+          description: |
+            Human-readable signal type. v2.0 populates this for every entry
+            (v1.0 returned null for GHG and Flex Alert entries).
           enum:
-            - Rates
-            - GHG
-            - Flex Alert
-            - null
+            - Electricity Rates
+            - Greenhouse Gas Emissions
+            - California Independent System Operator Flex Alert
         Description:
           type: string
           description: Human-readable description including distribution and energy providers.
@@ -182,10 +259,16 @@ components:
           type: string
           format: date-time
           description: |
-            Timestamp of the last update to this RIN's data.
-            Undocumented in upstream docs but present in live API responses.
+            Timestamp of the last update to this RIN's data (UTC). On live
+            v2.0 this carries a **basic-format UTC offset** (`±HHMM`, e.g.
+            `+0000`) with no colon — confirmed 2026-06-22, resolving the v1.0
+            bare/zoneless form. Note: `+0000` is ISO 8601 but not RFC 3339, so
+            strict RFC-3339 parsers (e.g. Java `ISO_OFFSET_DATE_TIME`, which
+            requires `+00:00`) reject it; parse with a lenient formatter that
+            accepts `+0000`, `+00:00`, and `Z`.
           examples:
-            - "2023-06-07T15:57:48.023Z"
+            - "2021-07-14T14:31:55+0000"
+            - "2026-05-22T15:23:43+0000"
 
     RateInfo:
       type: object
@@ -219,18 +302,23 @@ components:
             - string
             - "null"
           description: |
-            Rate classification. The upload codes (TOU, CPP, RTP, etc.) are
-            expanded to human-readable strings in GET responses. Null for
-            some signal types (e.g. Flex Alert).
+            Rate classification. The wire value is **inconsistent across signal
+            types** (confirmed against live v2.0, 2026-06-22):
 
-            Note: Uploads use short codes (e.g. "TOU") but GET responses
-            return long descriptions (e.g. "Time of use"). This inconsistency
-            is in the upstream API, not our spec.
+            - Electricity rates return the short `Ratetype` lookup UploadCode —
+              e.g. `TOU`, `CPP`, `RTP`, `VPP`, `DSR`, `V-D`, `C-D`, `R-D`,
+              `T-D` (not the long Description).
+            - SGIP GHG returns the long Description `Greenhouse Gas emissions`.
+            - Flex Alert returns the long Description `Flex Alert`.
+
+            So electricity rates expose the short code while GHG/Flex expose the
+            long Description. Consumers should match on both forms. May be null
+            for some entries.
           examples:
-            - Time of use
-            - Critical Peak Pricing
-            - Real Time Pricing
+            - TOU
+            - CPP
             - Greenhouse Gas emissions
+            - Flex Alert
         Sector:
           type:
             - string
@@ -298,7 +386,7 @@ components:
         - DayEnd
         - TimeStart
         - TimeEnd
-        - value
+        - Value
         - Unit
       properties:
         ValueName:
@@ -360,15 +448,14 @@ components:
           examples:
             - "08:59:59"
             - "03:11"
-        value:
+        Value:
           type: number
           description: |
             The price or emissions value for this interval.
 
-            Note: This field is lowercase "value" in GET responses, despite
-            being documented as uppercase "Value" in the upstream docs and
-            using uppercase in upload examples. We spec what the API actually
-            returns.
+            v2.0 standardizes the field name as "Value" (capital V), correcting
+            the v1.0 lowercase "value" quirk. SGIP GHG values are 1000× larger
+            than v1.0 because the unit changed from kg/kWh to g/kWh CO2.
           examples:
             - 0.1006
             - 0.1388
@@ -377,19 +464,47 @@ components:
           description: |
             Unit for the value. Known units from the Unit lookup table:
             $/kWh, $/kW, export $/kWh, backup $/kWh,
-            kg/kWh CO2, $/kvarh, Event, Level.
+            g/kWh CO2, $/kvarh, Event, Level. (SGIP GHG reports g/kWh CO2 in
+            v2.0; was kg/kWh CO2 in v1.0.)
           examples:
             - "$/kWh"
             - "$/kW"
             - "export $/kWh"
-            - "kg/kWh CO2"
+            - "g/kWh CO2"
+
+    LookupTableResponse:
+      type: object
+      description: |
+        v2.0 lookup-table response. Like the RIN list, the bare array of v1.0
+        is replaced by a keyed object — the table name plus a `data` array of
+        rows (confirmed against live v2.0, 2026-06-22).
+      required:
+        - table_name
+        - data
+      additionalProperties: false
+      properties:
+        table_name:
+          type: string
+          description: The name of the lookup table.
+          examples:
+            - Unit
+            - Ratetype
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/LookupEntry'
 
     LookupEntry:
       type: object
-      description: An entry from a MIDAS lookup/reference table.
+      description: |
+        An entry from a MIDAS lookup/reference table. All rows carry
+        `UploadCode` and `Description`; some tables add extra columns (e.g. the
+        `Unit` table adds `PayloadDescriptor` and `UnitType`), so additional
+        properties are permitted.
       required:
         - UploadCode
         - Description
+      additionalProperties: true
       properties:
         UploadCode:
           type: string
@@ -397,9 +512,22 @@ components:
           examples:
             - PG
             - MC
+            - "backup $/kWh"
         Description:
           type: string
           description: Human-readable description of the code.
           examples:
             - Pacific Gas and Electric
             - Marin Clean Energy
+        PayloadDescriptor:
+          type: string
+          description: |
+            Optional machine token for the row (present on the `Unit` table).
+          examples:
+            - BACKUP_PRICE
+        UnitType:
+          type: string
+          description: |
+            Optional unit category (present on the `Unit` table).
+          examples:
+            - KWH

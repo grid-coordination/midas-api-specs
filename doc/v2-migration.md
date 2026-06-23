@@ -2,7 +2,7 @@
 
 The California Energy Commission is releasing **MIDAS v2.0 on 2026-06-22**. This document is the spec-level delta between v1.0 and v2.0: which schema files, OpenAPI paths, and JSON fields change, and what verification is still outstanding. For end-user migration narrative, see the CEC's Change Guide for Data Consumers and the upstream announcement email.
 
-This repo's `main` branch tracks v1.0 spec until release day, when a `v2` branch will carry the breaking changes (see bd issue `midas-api-specs-b6k`). Safe additive changes (enum extensions, doc notes flagging upcoming behavior) are landing on `main` ahead of time.
+This repo's `main` branch tracks the v1.0 spec; the **`v2` branch carries the breaking changes** (see bd issue `midas-api-specs-b6k`). The `v2` branch was cut early — on 2026-06-19, three days ahead of release — so downstream API repos (e.g. `clj-midas`) can stage their own v2.0 feature branches against it. The breaking changes on `v2` reflect the CEC change guide and the resolved clarifications (§7); a live smoke-test against the production v2.0 API on release day (2026-06-22) is the remaining gate before merge. Safe additive changes (enum extensions, doc notes flagging upcoming behavior) already landed on `main` ahead of time.
 
 ## Sources
 
@@ -28,24 +28,41 @@ This repo's `main` branch tracks v1.0 spec until release day, when a `v2` branch
 | `GET /ValueData?ID={rin}&QueryType={alldata\|realtime}` | `GET /ValueData?ID={rin}&QueryType={alldata\|realtime}` | v2.0 paths are case-insensitive; CEC docs and this spec use PascalCase `/ValueData` for consistency. |
 | `GET /HistoricalData?id={rin}&startdate=&enddate=` | `GET /HistoricalData/{rate_id}?startdate=&enddate=` | RIN moves from query param to path param. Max range: 6 months per call. |
 | `GET /HistoricalList?DistributionCode=&EnergyCode=` | **Removed.** Use `GET /ValueData?SignalType=0` for the full active RIN list. | |
-| `GET /ValueData?LookupTable=Holiday` | **Removed.** | |
-| `GET /ValueData?LookupTable=TimeZone` | **Removed.** | |
-| `GET /Holiday` (standalone endpoint, `apis/holiday/openapi.yaml`) | **Kept for now, retirement planned.** Per CEC clarification, the standalone endpoint is retained at release but is on a deprecation path; final decision to come in the next CEC documentation update. | |
+| `GET /ValueData?LookupTable=Holiday` | **Removed.** Returns `400 {"detail": "Unsupported lookup table: Holiday"}` (not 404 — live, issue #6). | |
+| `GET /ValueData?LookupTable=TimeZone` | **Removed.** Returns `400 {"detail": "Unsupported lookup table: TimeZone"}` (not 404 — live, issue #6). | |
+| `GET /Holiday` (standalone endpoint) | **Removed from the public read surface.** Absent from the CEC's published OpenAPI; `apis/holiday/` removed from this spec set. The route persists at `/api/Holiday` but is **auth-gated** — anonymous calls return `401 {"detail": "Not authenticated"}`, not 404/gone (live, issue #7). | The `Holiday` day-type value in rate schedules (`8=Holiday`) is a separate concept and is unaffected. |
+| Retired legacy RINs (`SGRT`/`SGFC`/`SGHT`, `FXRT`/`FXFC`/`FXHT`) | **Retired.** Return `404 {"detail": "RIN not found: <RIN>"}` — the CEC announcement said `410 Gone`, but the live API returns 404 (issue #5). | |
 
 ## 3. Response shape changes
 
 ### RIN list (`?SignalType=N`)
 
-v1.0 returned a bare array of `RinListEntry`. v2.0 returns a keyed object:
+v1.0 returned a bare array of `RinListEntry`. v2.0 returns a single-keyed object. **On the live v2.0 API the wrapper key is always `Rates`, regardless of the requested `SignalType`** (confirmed 2026-06-22 for SignalType 0/1/2/3 — the `GHGEmissions`, `FlexAlerts`, and `All` keys implied by early design notes do **not** appear on the wire; corrected via [issue #2](https://github.com/grid-coordination/midas-api-specs/issues/2)):
 
 ```json
-{ "Rates":         [ { "RateID": "...", ... }, ... ] }   // SignalType=1
-{ "GHGEmissions":  [ ... ] }                              // SignalType=2
-{ "FlexAlerts":    [ ... ] }                              // SignalType=3
-{ "All":           [ ... ] }                              // SignalType=0
+{ "Rates": [ { "RateID": "...", "SignalType": "...", ... }, ... ] }   // SignalType=0/1/2/3 all use "Rates"
 ```
 
-**Spec impact:** new schema `apis/value-data/schemas/midas-rin-list-response.schema.json`; `oneOf` branch in `apis/value-data/openapi.yaml` references it.
+Consumers should peel the single value without switching on the key name; the per-entry `SignalType` field identifies each RIN's signal type.
+
+**Spec impact:** new schema `apis/value-data/schemas/midas-rin-list-response.schema.json` (single `Rates` key, `required`); `oneOf` branch in `apis/value-data/openapi.yaml` references it.
+
+### Lookup table (`?LookupTable=N`)
+
+The same bare-array → keyed-object change applies to lookup tables (confirmed live 2026-06-22; [issue #3](https://github.com/grid-coordination/midas-api-specs/issues/3)). v1.0 returned a bare array of `LookupEntry`; v2.0 wraps it:
+
+```json
+{ "table_name": "Unit",
+  "data": [ { "UploadCode": "backup $/kWh", "Description": "...", "PayloadDescriptor": "BACKUP_PRICE", "UnitType": "KWH" }, ... ] }
+```
+
+Some tables (e.g. `Unit`) carry extra row columns beyond `UploadCode`/`Description`.
+
+**Spec impact:** new schema `apis/value-data/schemas/midas-lookup-table-response.schema.json`; `LookupTableResponse` component + `oneOf` branch in `openapi.yaml`; `midas-lookup-entry.schema.json` now allows additional row properties.
+
+### RateType wire value (rate-values query)
+
+The `RateInfo.RateType` wire value is **inconsistent across signal types** (confirmed live 2026-06-22; [issue #1](https://github.com/grid-coordination/midas-api-specs/issues/1)): electricity rates return the short `Ratetype` lookup **UploadCode** (`TOU`, `CPP`, `RTP`, …), while SGIP GHG returns the long Description `Greenhouse Gas emissions` and Flex Alert returns `Flex Alert`. (Earlier spec notes had this backwards — claiming GET always expands to the long Description.) Consumers should match on both forms.
 
 The per-entry `SignalType` field value also changes substantially:
 
@@ -110,6 +127,8 @@ Note the BANC region code changes from `BANC` (v1.0) to `P2` (v2.0). All other r
 
 `MOER` realtime responses are a continuous 5-minute time series blending past observed data, current readings, and WattTime forecast.
 
+**Historical GHG continuity (CEC clarification, 2026-06-19).** Pre-migration SGIP GHG history is **not** migrated at the v2.0 cutover. The new `USCA-SGIP-MOER-{REGION}` RINs carry only post-2026-06-22 readings, so `GET /historicaldata/{rate_id}` against a MOER RIN returns no data for dates before the release. The canonical source for the legacy history is the [SGIP Signal bulk download](https://content.sgipsignal.com/download-data/) (CSV) — the same WattTime/SGIP Signal data that feeds MIDAS — or the [WattTime API](https://watttime.org/) directly. The CEC is still deciding whether to additionally migrate the history into MIDAS (transformations to AWS in a later upgrade) and did not confirm whether the legacy 33 RINs (`USCA-SGIP-{SGRT,SGFC,SGHT}-{REGION}`) stay queryable for earlier ranges. Consequently the archived-data normalization question (whether old readings are served as `g/kWh CO2` / `Value` / UTC / long-form labels, or as originally stored) is unanswered for GHG: there is no migrated GHG history to normalize. Flex Alert (`ALRT`) and electricity-rate history are unaffected by this caveat.
+
 ### Flex Alert: 3 RINs → 1 RIN
 
 | v1.0 RINs | v2.0 RIN |
@@ -128,7 +147,7 @@ The six pre-release open questions were clarified by the CEC MIDAS team on 2026-
 
 3. **Path casing**: **Case-insensitive in v2.0.** Both `/valuedata` and `/ValueData` work. CEC documentation will continue to use PascalCase `/ValueData` for consistency; this spec follows the same convention.
 
-4. **`/Holiday` standalone endpoint**: **Kept for now, retirement planned.** Final decision will be shared in the next CEC documentation update. The spec retains `apis/holiday/` with a note flagging planned retirement.
+4. **`/Holiday` standalone endpoint**: **Removed from the public read surface.** The 2026-06-12 reply flagged it "kept for now, retirement planned"; the final decision landed at cutover — the "MIDAS v2.0 is Now Live" email (2026-06-22) lists `Holiday` under *Removed endpoints*, and it is absent from the CEC's published OpenAPI. `apis/holiday/` has been removed from this spec set. Note (live, issue #7): the route is not gone at the routing layer — `/api/Holiday` still resolves but is now auth-gated, returning `401 {"detail": "Not authenticated"}` to anonymous callers rather than 404. There is no anonymous access, so consumers treat it as gone.
 
 5. **RIN list per-entry `SignalType` field**: **Populated, no longer null.**
    - GHG / `MOER` entries return `"Greenhouse Gas Emissions"`.
@@ -136,8 +155,15 @@ The six pre-release open questions were clarified by the CEC MIDAS team on 2026-
 
 6. **Wire timezone for `DateStart`/`TimeStart` in `ValueInformation`**: **UTC in v2.0 for all signal types.** The v1.0 PT-on-wire behavior we observed for SGIP GHG and Flex Alert was a documented bug — those datapoints were thin pass-throughs of the WattTime and CAISO upstream APIs (both natively PT) and MIDAS v1.0 did not convert before delivery. v1.0 electricity-rate RINs were always UTC. v2.0 converts upstream-provider timestamps to UTC before delivery. Window boundaries remain PT-aligned but are expressed in UTC: midnight Pacific = `07:00:00` UTC during PDT, `08:00:00` UTC during PST. See `doc/datetime-and-timezone.md` for the per-field inventory and consumer guidance.
 
+### Follow-up (CEC reply, 2026-06-19)
+
+1. **Cutover timing**: the transition happens **between 9 and 11 am Pacific on Monday 2026-06-22** (likely before 11). The CEC will send a mass email when the transition is finished — gate release-day verification on that email (or check after ~11 am PT).
+
+2. **Pre-migration GHG history / archived-data normalization**: pre-migration SGIP GHG history is **not** migrated at cutover. The consolidated `MOER` RINs carry only post-release readings; the canonical source for older history is the [SGIP Signal bulk download](https://content.sgipsignal.com/download-data/) (CSV) or the WattTime API, with a future CEC AWS migration still undecided, and the CEC did not confirm the legacy 33 RINs stay queryable. The archived-data normalization question is therefore unanswered for GHG (nothing migrated to normalize). See the "Historical GHG continuity" note in §6.
+
 ## 8. Migration phases
 
 1. **Pre-release (now → 2026-06-22)** — `main` branch: safe additive changes. Doc updates and enum extensions that don't break v1.0 consumers. See bd issues `midas-api-specs-{34p,3g9,a30,4gh,1v6,2in}` (all closed).
-2. **Release day (2026-06-22)** — Cut `v2` branch (`midas-api-specs-b6k`). Apply breaking changes. With §7 resolved by CEC, the only on-the-day verification needed is smoke-testing a live v2.0 response per signal type and confirming the documented behavior. See bd issues `midas-api-specs-{1uu,dmt,3os,82u,cnv,2x5,0zo,ym3}`.
-3. **Post-release** — Regenerate examples (`midas-api-specs-cay`). Tag spec `v1.0.0` (`midas-api-specs-2d7`) as a frozen v1 baseline. Merge `v2` to `main`.
+2. **Staging (cut 2026-06-19, ahead of plan)** — `v2` branch (`midas-api-specs-b6k`) cut early so downstream repos can build against it. Breaking changes applied: GET endpoints unauthenticated (`1uu`); RIN-list keyed-object response + `midas-rin-list-response.schema.json` (`dmt`, `3os`); `value` → `Value` casing (`82u`); `realtime`/`alldata` window semantics (`cnv`); `/historicaldata/{rate_id}` path form + HistoricalList removed (`2x5`); Holiday/TimeZone already absent from the lookup enums (`0zo`, no-op); standalone `/Holiday` endpoint retired and `apis/holiday/` removed (`ym3`). With §7 resolved by CEC, the only on-the-day verification needed is smoke-testing a live v2.0 response per signal type and confirming the documented behavior.
+3. **Release day (2026-06-22)** — Cutover runs 9–11 am PT; **wait for the CEC's "transition complete" mass email** (or verify after ~11 am PT) before testing. Live smoke-test `v2` against production per signal type; confirm `Value` casing, keyed RIN-list shape, UTC window boundaries, and that `historicaldata` against a `MOER` RIN returns no pre-release data (per the §6 GHG-history caveat). Regenerate examples against live data (`midas-api-specs-cay`).
+4. **Post-release** — Tag spec `v1.0.0` (`midas-api-specs-2d7`) as a frozen v1 baseline. Merge `v2` to `main` and bump the release version.

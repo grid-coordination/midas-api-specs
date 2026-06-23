@@ -22,7 +22,7 @@
     },
     "RateType": {
       "type": ["string", "null"],
-      "description": "Rate classification (TOU, CPP, RTP, etc.). Null for some signal types (e.g. Flex Alert)."
+      "description": "Rate classification. Inconsistent wire format across signal types (confirmed live v2.0, 2026-06-22): electricity rates return the short Ratetype lookup UploadCode (TOU, CPP, RTP, VPP, DSR, V-D, C-D, R-D, T-D); SGIP GHG returns the long Description 'Greenhouse Gas emissions'; Flex Alert returns the long Description 'Flex Alert'. Match on both the UploadCode and the Description. May be null for some entries."
     },
     "Sector": {
       "type": ["string", "null"],

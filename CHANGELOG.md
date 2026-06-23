@@ -19,7 +19,7 @@ Staged on the `v2` branch ahead of release so downstream consumers can build aga
 - **Breaking — SGIP GHG and Flex Alert RIN inventory consolidated.** SGIP GHG: 33 RINs (11 regions × SGRT/SGFC/SGHT) → 11 `USCA-SGIP-MOER-{REGION}`. Flex Alert: 3 RINs (FXRT/FXFC/FXHT) → 1 `USCA-FLEX-ALRT-0000`.
 - `realtime` is now a fixed 72-hour window and `alldata` a fixed 90-day window; all wire datetimes are normalized to UTC across every signal type (the v1.0 PT-on-wire passthrough for SGIP GHG and Flex Alert is gone).
 - RIN pattern widened from `{4,10}` to `{2,10}` on the trailing segment to admit v2.0 short region codes (`P2`, `PGE`, `SCE`, `TID`, `IID`).
-- `info.version` bumped to `2.0.0` across all five specs (ValueData, Historical, Holiday, Token, Registration).
+- `info.version` bumped to `2.0.0` across all four specs (ValueData, Historical, Token, Registration).
 
 ### Added
 
@@ -29,13 +29,29 @@ Staged on the `v2` branch ahead of release so downstream consumers can build aga
 
 ### Deprecated
 
-- The v1.0 SGIP GHG (`SGRT`/`SGFC`/`SGHT`) and Flex Alert (`FXRT`/`FXFC`/`FXHT`) RINs, replaced by the consolidated `MOER` and `ALRT` RINs above.
-- The standalone `GET /Holiday` endpoint — retained at release but flagged retirement-planned per CEC clarification (final decision pending; live confirmation tracked for release day).
+- The v1.0 SGIP GHG (`SGRT`/`SGFC`/`SGHT`) and Flex Alert (`FXRT`/`FXFC`/`FXHT`) RINs, replaced by the consolidated `MOER` and `ALRT` RINs above. Confirmed retired at cutover. Note: the CEC "MIDAS v2.0 is Now Live" email (2026-06-22) said calls to the old RINs return `HTTP 410 Gone`, but the **live API returns `HTTP 404`** with `{"detail": "RIN not found: <RIN>"}` — a retired RIN is indistinguishable from a never-existed one (live smoke-test 2026-06-22, GitHub issue #5).
 
 ### Removed
 
+- **Breaking — the standalone `GET /Holiday` endpoint** is removed from the public read surface. It is absent from the CEC's published OpenAPI, and the `apis/holiday/` spec and example are removed from this set. Note the route still exists at the routing layer (`/api/Holiday`) but is now **auth-gated**: an anonymous request returns `HTTP 401 {"detail": "Not authenticated"}`, not `404`/gone (live smoke-test 2026-06-22, GitHub issue #7). The `Holiday` day-type value in rate schedules (`8=Holiday`) is a separate concept and is unaffected.
 - **Breaking — the `HistoricalList` operation.** Use `GET /valuedata?SignalType=0` for the full active RIN list.
-- The `?LookupTable=Holiday` and `?LookupTable=TimeZone` lookup tables (return `404` in v2.0).
+- The `?LookupTable=Holiday` and `?LookupTable=TimeZone` lookup tables. These return `HTTP 400 {"detail": "Unsupported lookup table: <name>"}` in v2.0 (not `404` — live smoke-test 2026-06-22, GitHub issue #6).
+
+### Fixed
+
+Corrections from live v2.0 smoke-testing (`clj-midas`, 2026-06-22; GitHub issues #1–#4):
+
+- **RIN-list wrapper key is always `Rates`** (issue #2), regardless of `SignalType` — the `GHGEmissions`/`FlexAlerts`/`All` keys do not appear on the wire. `RinListResponse` (OpenAPI + `midas-rin-list-response.schema.json`) now models a single required `Rates` key.
+- **LookupTable response is a keyed object** `{ table_name, data: [LookupEntry] }`, not a bare array (issue #3). Added `LookupTableResponse` (OpenAPI) and `midas-lookup-table-response.schema.json`; `LookupEntry` now permits extra row columns (`PayloadDescriptor`, `UnitType` on the `Unit` table).
+- **`RateType` wire value is inconsistent across signal types** (issue #1): electricity rates return the short `Ratetype` UploadCode (`TOU`, `CPP`, …) while GHG/Flex return the long Description (`Greenhouse Gas emissions`, `Flex Alert`). Earlier notes had this backwards. Corrected `RateInfo.RateType` docs and the `tou-rate`/`flex-alert` examples.
+- **`LastUpdated` is UTC with a basic-format offset** `±HHMM` (e.g. `+0000`), resolving the documented v1.0 bare/zoneless-PT TBD (issue #4). Updated `doc/datetime-and-timezone.md`, `midas-rin-list-entry.schema.json`, and `rin-list-sample.json`; noted the RFC-3339 parsing caveat.
+
+Error-semantics corrections from `python-midas` 1.0.0 live smoke-testing (2026-06-22; GitHub issues #5–#7) — the CEC announcement's status codes did not match the live API:
+
+- **Retired RINs return `404`, not `410 Gone`** (issue #5): `{"detail": "RIN not found: <RIN>"}`.
+- **Retired lookup tables return `400`, not `404`** (issue #6): `{"detail": "Unsupported lookup table: <name>"}`.
+- **Standalone `/Holiday` returns `401`, not `404`/removed** (issue #7): the route persists at `/api/Holiday` but is auth-gated (`{"detail": "Not authenticated"}` for anonymous callers) — still gone from the public read surface.
+- Added an `Error` schema and `400`/`404` responses to `apis/value-data/openapi.yaml`.
 
 ## [1.0.0] — 2026-03-19
 
