@@ -28,9 +28,10 @@ This repo's `main` branch tracks the v1.0 spec; the **`v2` branch carries the br
 | `GET /ValueData?ID={rin}&QueryType={alldata\|realtime}` | `GET /ValueData?ID={rin}&QueryType={alldata\|realtime}` | v2.0 paths are case-insensitive; CEC docs and this spec use PascalCase `/ValueData` for consistency. |
 | `GET /HistoricalData?id={rin}&startdate=&enddate=` | `GET /HistoricalData/{rate_id}?startdate=&enddate=` | RIN moves from query param to path param. Max range: 6 months per call. |
 | `GET /HistoricalList?DistributionCode=&EnergyCode=` | **Removed.** Use `GET /ValueData?SignalType=0` for the full active RIN list. | |
-| `GET /ValueData?LookupTable=Holiday` | **Removed.** | |
-| `GET /ValueData?LookupTable=TimeZone` | **Removed.** | |
-| `GET /Holiday` (standalone endpoint) | **Removed.** Retired at the v2.0 cutover (CEC "MIDAS v2.0 is Now Live" email, 2026-06-22; absent from the CEC's published OpenAPI). `apis/holiday/` removed from this spec set. | The `Holiday` day-type value in rate schedules (`8=Holiday`) is a separate concept and is unaffected. |
+| `GET /ValueData?LookupTable=Holiday` | **Removed.** Returns `400 {"detail": "Unsupported lookup table: Holiday"}` (not 404 — live, issue #6). | |
+| `GET /ValueData?LookupTable=TimeZone` | **Removed.** Returns `400 {"detail": "Unsupported lookup table: TimeZone"}` (not 404 — live, issue #6). | |
+| `GET /Holiday` (standalone endpoint) | **Removed from the public read surface.** Absent from the CEC's published OpenAPI; `apis/holiday/` removed from this spec set. The route persists at `/api/Holiday` but is **auth-gated** — anonymous calls return `401 {"detail": "Not authenticated"}`, not 404/gone (live, issue #7). | The `Holiday` day-type value in rate schedules (`8=Holiday`) is a separate concept and is unaffected. |
+| Retired legacy RINs (`SGRT`/`SGFC`/`SGHT`, `FXRT`/`FXFC`/`FXHT`) | **Retired.** Return `404 {"detail": "RIN not found: <RIN>"}` — the CEC announcement said `410 Gone`, but the live API returns 404 (issue #5). | |
 
 ## 3. Response shape changes
 
@@ -146,7 +147,7 @@ The six pre-release open questions were clarified by the CEC MIDAS team on 2026-
 
 3. **Path casing**: **Case-insensitive in v2.0.** Both `/valuedata` and `/ValueData` work. CEC documentation will continue to use PascalCase `/ValueData` for consistency; this spec follows the same convention.
 
-4. **`/Holiday` standalone endpoint**: **Retired.** The 2026-06-12 reply flagged it "kept for now, retirement planned"; the final decision landed at cutover — the "MIDAS v2.0 is Now Live" email (2026-06-22) lists `Holiday` under *Removed endpoints*, and it is absent from the CEC's published OpenAPI. `apis/holiday/` has been removed from this spec set.
+4. **`/Holiday` standalone endpoint**: **Removed from the public read surface.** The 2026-06-12 reply flagged it "kept for now, retirement planned"; the final decision landed at cutover — the "MIDAS v2.0 is Now Live" email (2026-06-22) lists `Holiday` under *Removed endpoints*, and it is absent from the CEC's published OpenAPI. `apis/holiday/` has been removed from this spec set. Note (live, issue #7): the route is not gone at the routing layer — `/api/Holiday` still resolves but is now auth-gated, returning `401 {"detail": "Not authenticated"}` to anonymous callers rather than 404. There is no anonymous access, so consumers treat it as gone.
 
 5. **RIN list per-entry `SignalType` field**: **Populated, no longer null.**
    - GHG / `MOER` entries return `"Greenhouse Gas Emissions"`.

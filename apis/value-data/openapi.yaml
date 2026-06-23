@@ -145,11 +145,28 @@ paths:
                     $ref: '#/components/schemas/LookupTableResponse'
                   - title: XML Schema
                     type: string
+        '400':
+          description: |
+            Bad request. In v2.0 an unknown or retired lookup table returns 400
+            (not 404) — `?LookupTable=Holiday` and `?LookupTable=TimeZone` (both
+            retired) return `{"detail": "Unsupported lookup table: <name>"}`.
+            (Confirmed live 2026-06-22; GitHub issue #6.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '404':
           description: |
-            Not found — e.g. an unknown RIN, or a removed resource. In v2.0
-            the `?LookupTable=Holiday` and `?LookupTable=TimeZone` tables
-            return 404.
+            Not found. An unknown or **retired** RIN returns
+            `{"detail": "RIN not found: <RIN>"}`. A retired legacy RIN (e.g.
+            `USCA-SGIP-SGRT-PGE`, `USCA-FLEX-FXRT-0000`) is indistinguishable
+            on the wire from one that never existed — the CEC announcement said
+            `410 Gone`, but the live API returns 404. (Confirmed live
+            2026-06-22; GitHub issue #5.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
 components:
   securitySchemes:
@@ -161,6 +178,22 @@ components:
         HTTP Basic authentication, then pass it as `Authorization: Bearer {token}`.
 
   schemas:
+    Error:
+      type: object
+      description: |
+        Error response body. MIDAS v2.0 (FastAPI) returns a single `detail`
+        string for 4xx responses.
+      required:
+        - detail
+      additionalProperties: false
+      properties:
+        detail:
+          type: string
+          examples:
+            - "RIN not found: USCA-SGIP-SGRT-PGE"
+            - "Unsupported lookup table: Holiday"
+            - "Not authenticated"
+
     SignalTypeParam:
       type: integer
       enum:

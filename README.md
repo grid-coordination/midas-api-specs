@@ -49,7 +49,7 @@ Each API directory follows the same convention:
 | **ValueData** | Bearer token | Open (GET) | Specified | Query rate, GHG, and Flex Alert data by [RIN](doc/rin-structure.md); list RINs; retrieve lookup tables. Response shape and RIN inventory change substantially in v2.0 — see [v2-migration.md](doc/v2-migration.md). |
 | **Token** | Basic Auth | Basic Auth (still works; no longer required for GET data calls) | Specified | Retrieve short-lived (10-minute) bearer tokens |
 | **Registration** | None | None | Specified | Create new user and LSE accounts (POST only) |
-| **Holiday** | Bearer token | **Removed in v2.0** — standalone endpoint retired (the `Holiday` day-type in rate schedules is unaffected) | Removed | Retrieve utility holiday schedules |
+| **Holiday** | Bearer token | **Removed from public surface** — `/api/Holiday` route persists but is auth-gated (anonymous → `401`); the `Holiday` day-type in rate schedules is unaffected | Removed | Retrieve utility holiday schedules |
 | **HistoricalData** | Bearer token | Open | Specified | Retrieve archived rate information by RIN and date range. Path changes from `/HistoricalData?id=…` to `/historicaldata/{rate_id}` in v2.0. |
 | **HistoricalList** | Bearer token | **Removed in v2.0** — use `/valuedata?SignalType=0` instead | Specified | List RINs with available historical data by provider |
 
